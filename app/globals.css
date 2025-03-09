@@ -1,0 +1,286 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 263.4 70% 50.4%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 263.4 70% 50.4%;
+
+    --math: 230 100% 67%;
+    --science: 150 100% 45%;
+    --reading: 330 100% 65%;
+    --coding: 30 100% 60%;
+    --art: 300 100% 65%;
+    --music: 50 100% 60%;
+    --geography: 180 100% 45%;
+    --logic: 270 100% 65%;
+
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+.glow {
+  box-shadow: 0 0 20px rgba(var(--primary), 0.5);
+}
+
+.shadow-glow {
+  box-shadow: 0 0 15px rgba(147, 51, 234, 0.3);
+}
+
+.glow-math {
+  box-shadow: 0 0 20px rgba(var(--math), 0.5);
+}
+
+.glow-science {
+  box-shadow: 0 0 20px rgba(var(--science), 0.5);
+}
+
+.glow-reading {
+  box-shadow: 0 0 20px rgba(var(--reading), 0.5);
+}
+
+.glow-coding {
+  box-shadow: 0 0 20px rgba(var(--coding), 0.5);
+}
+
+.gradient-text {
+  @apply bg-clip-text text-transparent bg-gradient-to-r;
+}
+
+.gradient-border {
+  position: relative;
+  border-radius: var(--radius);
+}
+
+.gradient-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius);
+  padding: 2px;
+  background: linear-gradient(45deg, hsl(var(--primary)), hsl(var(--primary) / 0.5));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.gradient-border-math::before {
+  background: linear-gradient(45deg, hsl(var(--math)), hsl(var(--math) / 0.5));
+}
+
+.gradient-border-science::before {
+  background: linear-gradient(45deg, hsl(var(--science)), hsl(var(--science) / 0.5));
+}
+
+.gradient-border-reading::before {
+  background: linear-gradient(45deg, hsl(var(--reading)), hsl(var(--reading) / 0.5));
+}
+
+.gradient-border-coding::before {
+  background: linear-gradient(45deg, hsl(var(--coding)), hsl(var(--coding) / 0.5));
+}
+
+.animated-gradient {
+  background-size: 200% 200%;
+  animation: gradientAnimation 5s ease infinite;
+}
+
+@keyframes gradientAnimation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.floating {
+  animation: floating 3s ease-in-out infinite;
+}
+
+@keyframes floating {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.hexagon-grid {
+  position: relative;
+  overflow: hidden;
+}
+
+.hexagon {
+  position: absolute;
+  width: 100px;
+  height: 115px;
+  background: rgba(255, 255, 255, 0.03);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+
+.confetti {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background-color: hsl(var(--primary));
+  animation: confetti-fall 3s linear forwards;
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-100px) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(500px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.progress-ring__circle {
+  transition: stroke-dashoffset 0.35s;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+}
+
+.answer-option {
+  @apply relative overflow-hidden transition-all duration-300 border border-muted hover:border-primary/50;
+}
+
+.answer-option.correct {
+  @apply border-green-500 bg-green-500/10;
+}
+
+.answer-option.incorrect {
+  @apply border-red-500 bg-red-500/10;
+}
+
+.answer-option.selected {
+  @apply border-primary bg-primary/10;
+}
+
+.answer-option::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: radial-gradient(circle, rgba(var(--primary), 0.1) 0%, rgba(var(--primary), 0) 70%);
+  transform: translate(-50%, -50%);
+  transition: width 0.5s ease, height 0.5s ease;
+  border-radius: 50%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.answer-option:hover::before {
+  width: 200%;
+  height: 200%;
+}
+
+.answer-option.correct::before {
+  background: radial-gradient(circle, rgba(34, 197, 94, 0.2) 0%, rgba(34, 197, 94, 0) 70%);
+  width: 200%;
+  height: 200%;
+}
+
+.answer-option.incorrect::before {
+  background: radial-gradient(circle, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0) 70%);
+  width: 200%;
+  height: 200%;
+}
+
+.pattern-grid {
+  background-image: linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.pattern-dots {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.pattern-diagonal {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 25%, transparent 25%) -10px 0,
+    linear-gradient(225deg, rgba(255, 255, 255, 0.03) 25%, transparent 25%) -10px 0,
+    linear-gradient(315deg, rgba(255, 255, 255, 0.03) 25%, transparent 25%),
+    linear-gradient(45deg, rgba(255, 255, 255, 0.03) 25%, transparent 25%);
+  background-size: 20px 20px;
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  50% {
+    transform: translateX(5px);
+  }
+  75% {
+    transform: translateX(-5px);
+  }
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+.drop-shadow-glow {
+  filter: drop-shadow(0 0 5px rgba(147, 51, 234, 0.5));
+}
+
