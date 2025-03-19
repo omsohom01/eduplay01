@@ -1,85 +1,60 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import {
-  ArrowRight,
-  Brain,
-  Sparkles,
-  BarChart3,
-  Zap,
-  BookOpen,
-  Code,
-  Calculator,
-  FlaskRoundIcon as Flask,
-} from "lucide-react"
+import { Calculator, FlaskRoundIcon as Flask, BookOpen, Code, Trophy, Video, Gamepad2 } from "lucide-react"
 
 export default function Home() {
   return (
-    <div className="flex flex-col">
+    <main className="flex-1">
       {/* Hero Section */}
-      <section className="relative w-full py-20 md:py-32 overflow-hidden">
-        {/* Background pattern */}
-        <div className="absolute inset-0 pattern-dots opacity-20"></div>
-
-        {/* Floating hexagons */}
-        <div className="absolute inset-0 hexagon-grid">
-          {Array.from({ length: 20 }).map((_, i) => (
-            <div
-              key={i}
-              className="hexagon"
-              style={{
-                top: `${Math.random() * 100}%`,
-                left: `${Math.random() * 100}%`,
-                opacity: Math.random() * 0.5 + 0.1,
-                transform: `scale(${Math.random() * 1.5 + 0.5})`,
-              }}
-            ></div>
-          ))}
-        </div>
-
-        <div className="container relative z-10 px-4 md:px-6">
-          <div className="flex flex-col items-center text-center space-y-8 max-w-3xl mx-auto">
-            <div className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-2">
-              <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-              <span>AI-Powered Learning for Kids</span>
-            </div>
-
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight gradient-text from-primary via-purple-500 to-pink-500 leading-tight">
-              Make Learning Fun with EduPlay
-            </h1>
-
-            <p className="text-xl text-muted-foreground max-w-2xl">
-              An interactive educational platform designed for children aged 3-12 that combines games, personalized
-              learning paths, and real-time progress tracking.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 mt-4">
-              <Button
-                asChild
-                size="lg"
-                className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white"
-              >
+      <section className="relative overflow-hidden py-20 md:py-32">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-secondary/10 z-0"></div>
+        <div className="container relative z-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
+                Learning Made <span className="text-primary">Fun</span> and{" "}
+                <span className="text-primary">Interactive</span>
+              </h1>
+              <p className="text-xl text-muted-foreground mb-8">
+                Explore subjects, play educational games, and track your progress with our interactive learning
+                platform.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="/subjects">
-                  Start Learning
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <Button size="lg" className="w-full sm:w-auto">
+                    Start Learning
+                  </Button>
                 </Link>
-              </Button>
-              <Button asChild variant="outline" size="lg">
-                <Link href="/about">Learn More</Link>
-              </Button>
+                <Link href="/quiz">
+                  <Button size="lg" variant="outline" className="w-full sm:w-auto">
+                    Take a Quiz
+                  </Button>
+                </Link>
+              </div>
             </div>
-
-            <div className="w-full max-w-md mx-auto mt-8 grid grid-cols-3 gap-4">
-              <div className="flex flex-col items-center p-3 rounded-lg bg-secondary/50">
-                <div className="text-2xl font-bold gradient-text from-primary to-purple-500">500+</div>
-                <div className="text-xs text-muted-foreground">Activities</div>
-              </div>
-              <div className="flex flex-col items-center p-3 rounded-lg bg-secondary/50">
-                <div className="text-2xl font-bold gradient-text from-primary to-purple-500">8</div>
-                <div className="text-xs text-muted-foreground">Subjects</div>
-              </div>
-              <div className="flex flex-col items-center p-3 rounded-lg bg-secondary/50">
-                <div className="text-2xl font-bold gradient-text from-primary to-purple-500">10k+</div>
-                <div className="text-xs text-muted-foreground">Students</div>
+            <div className="relative">
+              <div className="absolute -inset-px bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 rounded-2xl blur-xl"></div>
+              <div className="grid grid-cols-2 gap-4 p-1">
+                <div className="bg-card p-6 rounded-xl shadow-lg">
+                  <Calculator className="h-8 w-8 text-primary mb-3" />
+                  <h3 className="font-bold mb-1">Mathematics</h3>
+                  <p className="text-sm text-muted-foreground">Numbers, shapes, and patterns</p>
+                </div>
+                <div className="bg-card p-6 rounded-xl shadow-lg">
+                  <Flask className="h-8 w-8 text-green-500 mb-3" />
+                  <h3 className="font-bold mb-1">Science</h3>
+                  <p className="text-sm text-muted-foreground">Explore the natural world</p>
+                </div>
+                <div className="bg-card p-6 rounded-xl shadow-lg">
+                  <BookOpen className="h-8 w-8 text-orange-500 mb-3" />
+                  <h3 className="font-bold mb-1">Reading</h3>
+                  <p className="text-sm text-muted-foreground">Words, stories, and language</p>
+                </div>
+                <div className="bg-card p-6 rounded-xl shadow-lg">
+                  <Code className="h-8 w-8 text-indigo-500 mb-3" />
+                  <h3 className="font-bold mb-1">Coding</h3>
+                  <p className="text-sm text-muted-foreground">Logic and problem-solving</p>
+                </div>
               </div>
             </div>
           </div>
@@ -87,194 +62,126 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="w-full py-20 bg-secondary/20">
-        <div className="container px-4 md:px-6">
-          <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
-            <div className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
-              <Zap className="h-3.5 w-3.5 mr-1.5" />
-              <span>Key Features</span>
-            </div>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Why Choose EduPlay?</h2>
-            <p className="text-muted-foreground max-w-[800px]">
-              Our platform combines the best of education and entertainment to create an engaging learning experience.
+      <section className="py-20 bg-secondary/30">
+        <div className="container">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">How EduPlay Works</h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Our platform offers multiple ways to learn and engage with educational content
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="group relative p-6 rounded-xl bg-secondary/30 border border-secondary hover:border-primary/50 transition-all duration-300">
-              <div className="absolute -inset-px bg-gradient-to-r from-primary to-purple-600 rounded-xl opacity-0 group-hover:opacity-10 transition-opacity"></div>
-              <div className="relative">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                  <Brain className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="text-xl font-bold mb-2">Personalized Learning</h3>
-                <p className="text-muted-foreground">
-                  AI-powered curriculum tailored to each child's strengths, weaknesses, and learning style.
-                </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-card p-8 rounded-xl shadow-sm">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+                <BookOpen className="h-6 w-6 text-primary" />
               </div>
+              <h3 className="text-xl font-bold mb-3">Learn with Subjects</h3>
+              <p className="text-muted-foreground mb-4">
+                Explore educational content across various subjects and topics, with interactive lessons designed for
+                different age groups.
+              </p>
+              <Link href="/subjects">
+                <Button variant="outline" className="w-full">
+                  Explore Subjects
+                </Button>
+              </Link>
             </div>
 
-            <div className="group relative p-6 rounded-xl bg-secondary/30 border border-secondary hover:border-primary/50 transition-all duration-300">
-              <div className="absolute -inset-px bg-gradient-to-r from-primary to-purple-600 rounded-xl opacity-0 group-hover:opacity-10 transition-opacity"></div>
-              <div className="relative">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                  <Sparkles className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="text-xl font-bold mb-2">Interactive Games</h3>
-                <p className="text-muted-foreground">
-                  Engaging, gamified lessons that make learning enjoyable and motivate kids to keep progressing.
-                </p>
+            <div className="bg-card p-8 rounded-xl shadow-sm">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+                <Trophy className="h-6 w-6 text-primary" />
               </div>
+              <h3 className="text-xl font-bold mb-3">Test Your Knowledge</h3>
+              <p className="text-muted-foreground mb-4">
+                Challenge yourself with quizzes at different difficulty levels, from easy to advanced, and track your
+                progress over time.
+              </p>
+              <Link href="/quiz">
+                <Button variant="outline" className="w-full">
+                  Take Quizzes
+                </Button>
+              </Link>
             </div>
 
-            <div className="group relative p-6 rounded-xl bg-secondary/30 border border-secondary hover:border-primary/50 transition-all duration-300">
-              <div className="absolute -inset-px bg-gradient-to-r from-primary to-purple-600 rounded-xl opacity-0 group-hover:opacity-10 transition-opacity"></div>
-              <div className="relative">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                  <BarChart3 className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="text-xl font-bold mb-2">Progress Tracking</h3>
-                <p className="text-muted-foreground">
-                  Detailed reports and insights for parents and teachers to monitor learning progress.
-                </p>
+            <div className="bg-card p-8 rounded-xl shadow-sm">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+                <Gamepad2 className="h-6 w-6 text-primary" />
               </div>
+              <h3 className="text-xl font-bold mb-3">Learn Through Play</h3>
+              <p className="text-muted-foreground mb-4">
+                Make learning fun with interactive educational games that reinforce concepts while providing
+                entertainment and engagement.
+              </p>
+              <Link href="/games">
+                <Button variant="outline" className="w-full">
+                  Play Games
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Subjects Section */}
-      <section className="w-full py-20">
-        <div className="container px-4 md:px-6">
-          <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
-            <div className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
-              <BookOpen className="h-3.5 w-3.5 mr-1.5" />
-              <span>Explore Subjects</span>
-            </div>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Discover a World of Knowledge</h2>
-            <p className="text-muted-foreground max-w-[800px]">
-              Explore our comprehensive subject offerings designed to make learning fun and effective.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Link href="/subjects/math" className="group">
-              <div className="relative overflow-hidden rounded-xl gradient-border gradient-border-math bg-secondary/30 p-6 h-full transition-all duration-300 hover:bg-secondary/50">
-                <div className="flex flex-col h-full">
-                  <div className="w-12 h-12 rounded-full bg-math/10 flex items-center justify-center mb-4">
-                    <Calculator className="h-6 w-6 text-math" />
-                  </div>
-                  <h3 className="text-xl font-bold mb-2 group-hover:text-math transition-colors">Mathematics</h3>
-                  <p className="text-muted-foreground flex-grow">
-                    Fun puzzles and games that teach numbers, counting, and problem-solving.
-                  </p>
-                  <div className="mt-4 flex items-center text-sm font-medium text-math opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span>Explore Math</span>
-                    <ArrowRight className="ml-1 h-4 w-4" />
-                  </div>
-                </div>
+      {/* Video Search Section */}
+      <section className="py-20">
+        <div className="container">
+          <div className="flex flex-col md:flex-row gap-12 items-center">
+            <div className="md:w-1/2">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Find Educational Videos</h2>
+              <p className="text-xl text-muted-foreground mb-6">
+                Use our AI-powered video search to find the best educational videos for any topic. Perfect for visual
+                learners!
+              </p>
+              <div className="bg-secondary/30 p-6 rounded-xl mb-6">
+                <p className="italic text-muted-foreground">
+                  "The video search feature helped my child find exactly what they needed to understand fractions
+                  better!"
+                </p>
+                <p className="font-medium mt-2">— Parent of 8-year-old</p>
               </div>
-            </Link>
-
-            <Link href="/subjects/science" className="group">
-              <div className="relative overflow-hidden rounded-xl gradient-border gradient-border-science bg-secondary/30 p-6 h-full transition-all duration-300 hover:bg-secondary/50">
-                <div className="flex flex-col h-full">
-                  <div className="w-12 h-12 rounded-full bg-science/10 flex items-center justify-center mb-4">
-                    <Flask className="h-6 w-6 text-science" />
-                  </div>
-                  <h3 className="text-xl font-bold mb-2 group-hover:text-science transition-colors">Science</h3>
-                  <p className="text-muted-foreground flex-grow">
-                    Exciting experiments and discoveries about the natural world.
-                  </p>
-                  <div className="mt-4 flex items-center text-sm font-medium text-science opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span>Explore Science</span>
-                    <ArrowRight className="ml-1 h-4 w-4" />
-                  </div>
-                </div>
-              </div>
-            </Link>
-
-            <Link href="/subjects/reading" className="group">
-              <div className="relative overflow-hidden rounded-xl gradient-border gradient-border-reading bg-secondary/30 p-6 h-full transition-all duration-300 hover:bg-secondary/50">
-                <div className="flex flex-col h-full">
-                  <div className="w-12 h-12 rounded-full bg-reading/10 flex items-center justify-center mb-4">
-                    <BookOpen className="h-6 w-6 text-reading" />
-                  </div>
-                  <h3 className="text-xl font-bold mb-2 group-hover:text-reading transition-colors">Reading</h3>
-                  <p className="text-muted-foreground flex-grow">
-                    Interactive stories and activities to build literacy skills.
-                  </p>
-                  <div className="mt-4 flex items-center text-sm font-medium text-reading opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span>Explore Reading</span>
-                    <ArrowRight className="ml-1 h-4 w-4" />
-                  </div>
-                </div>
-              </div>
-            </Link>
-
-            <Link href="/subjects/coding" className="group">
-              <div className="relative overflow-hidden rounded-xl gradient-border gradient-border-coding bg-secondary/30 p-6 h-full transition-all duration-300 hover:bg-secondary/50">
-                <div className="flex flex-col h-full">
-                  <div className="w-12 h-12 rounded-full bg-coding/10 flex items-center justify-center mb-4">
-                    <Code className="h-6 w-6 text-coding" />
-                  </div>
-                  <h3 className="text-xl font-bold mb-2 group-hover:text-coding transition-colors">Coding</h3>
-                  <p className="text-muted-foreground flex-grow">
-                    Beginner-friendly programming challenges and logic puzzles.
-                  </p>
-                  <div className="mt-4 flex items-center text-sm font-medium text-coding opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span>Explore Coding</span>
-                    <ArrowRight className="ml-1 h-4 w-4" />
-                  </div>
-                </div>
-              </div>
-            </Link>
-          </div>
-
-          <div className="flex justify-center mt-10">
-            <Button
-              asChild
-              size="lg"
-              className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
-            >
-              <Link href="/subjects">
-                View All Subjects
-                <ArrowRight className="ml-2 h-4 w-4" />
+              <Link href="/video-search">
+                <Button className="flex items-center gap-2">
+                  <Video className="h-4 w-4" />
+                  Try Video Search
+                </Button>
               </Link>
-            </Button>
+            </div>
+            <div className="md:w-1/2">
+              <div className="relative rounded-xl overflow-hidden shadow-lg">
+                <div className="aspect-video bg-secondary/50 flex items-center justify-center">
+                  <Video className="h-16 w-16 text-muted-foreground/50" />
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="bg-primary/90 text-primary-foreground px-4 py-2 rounded-full font-medium">
+                    Kid-friendly videos
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="w-full py-20 bg-gradient-to-br from-primary/10 to-purple-600/10 pattern-diagonal">
-        <div className="container px-4 md:px-6">
-          <div className="flex flex-col items-center justify-center space-y-4 text-center max-w-3xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight gradient-text from-primary to-purple-500">
-              Ready to Start Learning?
-            </h2>
-            <p className="text-xl text-muted-foreground">
-              Join thousands of children who are learning and having fun with EduPlay.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 mt-4">
-              <Button
-                asChild
-                size="lg"
-                className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
-              >
-                <Link href="/signup">
-                  Sign Up for Free
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
+      <section className="py-20 bg-primary/5">
+        <div className="container text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Start Learning?</h2>
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
+            Join thousands of children who are learning and having fun with EduPlay's interactive educational platform.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/subjects">
+              <Button size="lg">Explore Subjects</Button>
+            </Link>
+            <Link href="/quiz">
+              <Button size="lg" variant="outline">
+                Take a Quiz
               </Button>
-              <Button asChild variant="outline" size="lg">
-                <Link href="/contact">Contact Us</Link>
-              </Button>
-            </div>
+            </Link>
           </div>
         </div>
       </section>
-    </div>
+    </main>
   )
 }
-

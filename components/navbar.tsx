@@ -1,160 +1,255 @@
 "use client"
 
-import Link from "next/link"
 import { useState, useEffect } from "react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import {
+  Menu,
+  X,
+  Sun,
+  Moon,
+  BookOpen,
+  Trophy,
+  History,
+  User,
+  LogOut,
+  LogIn,
+  UserPlus,
+  Video,
+  Home,
+  Brain,
+  Gamepad2,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Menu, X, Home, BookOpen, BarChart3, Info, LogIn, Gamepad2 } from "lucide-react"
+import { useTheme } from "next-themes"
+import { useAuth } from "@/contexts/auth-context"
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [scrolled, setScrolled] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  const { theme, setTheme } = useTheme()
+  const pathname = usePathname()
+  const { user, logout } = useAuth()
 
+  // After mounting, we have access to the theme
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 10)
-    }
-
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
+    setMounted(true)
   }, [])
 
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen)
+  }
+
+  const closeMenu = () => {
+    setIsMenuOpen(false)
+  }
+
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark")
+  }
+
+  const navLinks = [
+    {
+      name: "Home",
+      href: "/",
+      active: pathname === "/",
+      icon: Home,
+    },
+    {
+      name: "Subjects",
+      href: "/subjects",
+      active: pathname === "/subjects" || pathname?.startsWith("/subjects/"),
+      icon: BookOpen,
+    },
+    {
+      name: "Quiz",
+      href: "/quiz",
+      active: pathname === "/quiz" || pathname?.startsWith("/quiz/"),
+      icon: Brain,
+    },
+    {
+      name: "Games",
+      href: "/games",
+      active: pathname === "/games" || pathname?.startsWith("/games/"),
+      icon: Gamepad2,
+    },
+    {
+      name: "Video Search",
+      href: "/video-search",
+      active: pathname === "/video-search",
+      icon: Video,
+    },
+    {
+      name: "Test Your Level",
+      href: "/test-your-level",
+      active: pathname === "/test-your-level",
+      icon: Trophy,
+    },
+  ]
+
+  const userLinks = user
+    ? [
+        {
+          name: "Profile",
+          href: "/profile",
+          active: pathname === "/profile",
+          icon: User,
+        },
+        {
+          name: "History",
+          href: "/history",
+          active: pathname === "/history",
+          icon: History,
+        },
+        {
+          name: "Achievements",
+          href: "/achievements",
+          active: pathname === "/achievements",
+          icon: Trophy,
+        },
+      ]
+    : [
+        {
+          name: "Sign In",
+          href: "/signin",
+          active: pathname === "/signin",
+          icon: LogIn,
+        },
+        {
+          name: "Sign Up",
+          href: "/signup",
+          active: pathname === "/signup",
+          icon: UserPlus,
+        },
+      ]
+
   return (
-    <header
-      className={`fixed top-0 z-50 w-full transition-all duration-300 ${
-        scrolled ? "bg-background/80 backdrop-blur-md border-b" : "bg-transparent"
-      }`}
-    >
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="relative w-8 h-8 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center">
-            <span className="text-white font-bold text-sm">E</span>
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary to-purple-600 opacity-50 blur-[2px]"></div>
-          </div>
-          <span className="text-xl font-bold gradient-text from-primary to-purple-500">EduPlay</span>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2" onClick={closeMenu}>
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary">
+              <BookOpen className="h-4 w-4 text-primary-foreground" />
+            </div>
+            <span className="font-bold text-xl">EduPlay</span>
+          </Link>
 
-        <nav className="hidden md:flex items-center gap-6">
-          <Link
-            href="/"
-            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
-          >
-            <Home className="h-4 w-4" />
-            <span>Home</span>
-          </Link>
-          <Link
-            href="/subjects"
-            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
-          >
-            <BookOpen className="h-4 w-4" />
-            <span>Subjects</span>
-          </Link>
-          <Link
-            href="/games"
-            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
-          >
-            <Gamepad2 className="h-4 w-4" />
-            <span>Games</span>
-          </Link>
-          <Link
-            href="/dashboard"
-            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
-          >
-            <BarChart3 className="h-4 w-4" />
-            <span>Dashboard</span>
-          </Link>
-          <Link
-            href="/about"
-            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
-          >
-            <Info className="h-4 w-4" />
-            <span>About</span>
-          </Link>
-        </nav>
-
-        <div className="hidden md:flex items-center gap-4">
-          <Button asChild variant="ghost" size="sm" className="gap-1.5">
-            <Link href="/login">
-              <LogIn className="h-4 w-4" />
-              <span>Log In</span>
-            </Link>
-          </Button>
-          <Button
-            asChild
-            size="sm"
-            className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
-          >
-            <Link href="/signup">Sign Up</Link>
-          </Button>
+          <nav className="hidden md:flex items-center gap-6 ml-6">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary ${
+                  link.active ? "text-primary" : "text-muted-foreground"
+                }`}
+              >
+                {link.icon && <link.icon className="h-4 w-4" />}
+                {link.name}
+              </Link>
+            ))}
+          </nav>
         </div>
 
-        <div className="md:hidden flex items-center">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            aria-label="Toggle menu"
-            className="text-foreground"
-          >
-            {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" className="mr-2" onClick={toggleTheme}>
+            {mounted && theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </Button>
+
+          <div className="hidden md:flex items-center gap-4">
+            {user ? (
+              <>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+                    <span className="text-sm font-medium">{user.name?.charAt(0) || "U"}</span>
+                  </div>
+                  <div className="text-sm font-medium">{user.name || "User"}</div>
+                </div>
+                <Button variant="ghost" size="sm" onClick={logout} className="flex items-center gap-2">
+                  <LogOut className="h-4 w-4" />
+                  <span>Logout</span>
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link href="/signin">
+                  <Button variant="ghost" size="sm">
+                    Sign In
+                  </Button>
+                </Link>
+                <Link href="/signup">
+                  <Button>Sign Up</Button>
+                </Link>
+              </>
+            )}
+          </div>
+
+          <Button variant="ghost" size="icon" className="md:hidden" onClick={toggleMenu}>
+            <Menu className="h-6 w-6" />
           </Button>
         </div>
       </div>
 
+      {/* Mobile menu */}
       {isMenuOpen && (
-        <div className="md:hidden absolute top-16 left-0 right-0 bg-background/95 backdrop-blur-md border-b animate-fade-in">
-          <nav className="container flex flex-col py-4">
-            <Link
-              href="/"
-              className="flex items-center gap-2 px-4 py-3 text-sm font-medium hover:bg-muted/50 rounded-md"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              <Home className="h-4 w-4" />
-              <span>Home</span>
+        <div className="fixed inset-0 z-50 bg-background md:hidden">
+          <div className="container flex h-16 items-center justify-between">
+            <Link href="/" className="flex items-center gap-2" onClick={closeMenu}>
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary">
+                <BookOpen className="h-4 w-4 text-primary-foreground" />
+              </div>
+              <span className="font-bold text-xl">EduPlay</span>
             </Link>
-            <Link
-              href="/subjects"
-              className="flex items-center gap-2 px-4 py-3 text-sm font-medium hover:bg-muted/50 rounded-md"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              <BookOpen className="h-4 w-4" />
-              <span>Subjects</span>
-            </Link>
-            <Link
-              href="/games"
-              className="flex items-center gap-2 px-4 py-3 text-sm font-medium hover:bg-muted/50 rounded-md"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              <Gamepad2 className="h-4 w-4" />
-              <span>Games</span>
-            </Link>
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-2 px-4 py-3 text-sm font-medium hover:bg-muted/50 rounded-md"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              <BarChart3 className="h-4 w-4" />
-              <span>Dashboard</span>
-            </Link>
-            <Link
-              href="/about"
-              className="flex items-center gap-2 px-4 py-3 text-sm font-medium hover:bg-muted/50 rounded-md"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              <Info className="h-4 w-4" />
-              <span>About</span>
-            </Link>
-            <div className="flex flex-col gap-2 mt-2 px-4 pt-2 border-t">
-              <Button asChild variant="outline" size="sm" className="justify-start">
-                <Link href="/login" onClick={() => setIsMenuOpen(false)}>
-                  <LogIn className="h-4 w-4 mr-2" />
-                  Log In
+
+            <Button variant="ghost" size="icon" onClick={toggleMenu}>
+              <X className="h-6 w-6" />
+            </Button>
+          </div>
+
+          <nav className="container grid gap-6 pb-20 pt-6">
+            <div className="grid grid-cols-1 gap-3">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`flex items-center gap-2 text-lg font-medium ${
+                    link.active ? "text-primary" : "text-muted-foreground"
+                  }`}
+                  onClick={closeMenu}
+                >
+                  {link.icon && <link.icon className="h-5 w-5" />}
+                  {link.name}
                 </Link>
-              </Button>
-              <Button asChild size="sm" className="bg-gradient-to-r from-primary to-purple-600">
-                <Link href="/signup" onClick={() => setIsMenuOpen(false)}>
-                  Sign Up
-                </Link>
-              </Button>
+              ))}
+            </div>
+
+            <div className="border-t pt-4">
+              <div className="grid grid-cols-1 gap-3">
+                {userLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`flex items-center gap-2 text-lg font-medium ${
+                      link.active ? "text-primary" : "text-muted-foreground"
+                    }`}
+                    onClick={closeMenu}
+                  >
+                    {link.icon && <link.icon className="h-5 w-5" />}
+                    {link.name}
+                  </Link>
+                ))}
+                {user && (
+                  <button
+                    className="flex items-center gap-2 text-lg font-medium text-muted-foreground"
+                    onClick={() => {
+                      logout()
+                      closeMenu()
+                    }}
+                  >
+                    <LogOut className="h-5 w-5" />
+                    Logout
+                  </button>
+                )}
+              </div>
             </div>
           </nav>
         </div>
@@ -162,4 +257,3 @@ export function Navbar() {
     </header>
   )
 }
-

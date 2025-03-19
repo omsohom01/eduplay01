@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Gamepad2, Trophy, Star, Clock } from "lucide-react"
+import { ArrowRight, Gamepad2, Trophy, Star, Clock, Brain, Palette } from "lucide-react"
 
 export default function GamesPage() {
   const games = [
@@ -27,6 +27,30 @@ export default function GamesPage() {
       color: "from-pink-600 to-red-600",
       textColor: "text-pink-500",
       bgColor: "bg-pink-500/10",
+    },
+    {
+      id: "memory-match",
+      title: "Memory Match",
+      description: "Test your memory by matching pairs of cards in this classic concentration game!",
+      category: "Logic",
+      difficulty: "All Levels",
+      playTime: "3-8 min",
+      skills: ["Memory", "Concentration", "Pattern recognition"],
+      color: "from-green-600 to-teal-600",
+      textColor: "text-green-500",
+      bgColor: "bg-green-500/10",
+    },
+    {
+      id: "art-studio",
+      title: "Creative Art Studio",
+      description: "Express yourself through digital art with various tools, colors, and templates!",
+      category: "Art",
+      difficulty: "All Levels",
+      playTime: "10-20 min",
+      skills: ["Creativity", "Fine motor skills", "Color theory"],
+      color: "from-orange-600 to-amber-600",
+      textColor: "text-orange-500",
+      bgColor: "bg-orange-500/10",
     },
   ]
 
@@ -61,7 +85,15 @@ export default function GamesPage() {
                 <div className="flex flex-col h-full">
                   <div className="flex items-start justify-between mb-4">
                     <div className={`w-12 h-12 rounded-full ${game.bgColor} flex items-center justify-center`}>
-                      <Gamepad2 className={`h-6 w-6 ${game.textColor}`} />
+                      {game.id === "math-asteroid-blaster" ? (
+                        <Gamepad2 className={`h-6 w-6 ${game.textColor}`} />
+                      ) : game.id === "word-scramble-challenge" ? (
+                        <Gamepad2 className={`h-6 w-6 ${game.textColor}`} />
+                      ) : game.id === "memory-match" ? (
+                        <Brain className={`h-6 w-6 ${game.textColor}`} />
+                      ) : (
+                        <Palette className={`h-6 w-6 ${game.textColor}`} />
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-secondary/50 text-xs">
@@ -132,4 +164,3 @@ export default function GamesPage() {
     </div>
   )
 }
-

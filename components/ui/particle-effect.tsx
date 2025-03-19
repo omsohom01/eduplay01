@@ -119,4 +119,3 @@ export function ParticleEffect({
 
   return <canvas ref={canvasRef} className={`absolute inset-0 pointer-events-none ${className}`} />
 }
-

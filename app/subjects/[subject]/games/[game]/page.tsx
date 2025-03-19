@@ -401,4 +401,3 @@ export default function GamePage({ params }: { params: { subject: string; game: 
     </div>
   )
 }
-

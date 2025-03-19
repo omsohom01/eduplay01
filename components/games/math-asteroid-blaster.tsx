@@ -5,7 +5,7 @@ import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { ParticleEffect } from "@/components/ui/particle-effect"
-import { Rocket, Shield, Star, Zap, Volume2, VolumeX } from "lucide-react"
+import { Rocket, Shield, Star, Zap, Volume2, VolumeX, Award, HelpCircle, X } from "lucide-react"
 
 interface Asteroid {
   id: string
@@ -59,10 +59,52 @@ export function MathAsteroidBlaster() {
   const [currentProblem, setCurrentProblem] = useState<MathProblem | null>(null)
   const [soundEnabled, setSoundEnabled] = useState(false)
   const [highScore, setHighScore] = useState(0)
+  const [showTutorial, setShowTutorial] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  const [touchStartX, setTouchStartX] = useState(0)
 
   const gameAreaRef = useRef<HTMLDivElement>(null)
   const gameLoopRef = useRef<number>()
   const lastAsteroidTimeRef = useRef(0)
+  const audioRef = useRef<{ [key: string]: HTMLAudioElement }>({})
+
+  // Check if device is mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+
+    checkMobile()
+    window.addEventListener("resize", checkMobile)
+
+    return () => {
+      window.removeEventListener("resize", checkMobile)
+    }
+  }, [])
+
+  // Initialize audio elements
+  useEffect(() => {
+    audioRef.current = {
+      laser: new Audio("/sounds/laser.mp3"),
+      explosion: new Audio("/sounds/explosion.mp3"),
+      wrong: new Audio("/sounds/wrong.mp3"),
+      levelUp: new Audio("/sounds/levelup.mp3"),
+    }
+
+    // Preload audio
+    Object.values(audioRef.current).forEach((audio) => {
+      audio.load()
+      audio.volume = 0.5
+    })
+
+    return () => {
+      // Clean up audio
+      Object.values(audioRef.current).forEach((audio) => {
+        audio.pause()
+        audio.currentTime = 0
+      })
+    }
+  }, [])
 
   // Generate a math problem based on the current level
   const generateMathProblem = () => {
@@ -198,10 +240,10 @@ export function MathAsteroidBlaster() {
   // Get color based on the asteroid value
   const getAsteroidColor = (value: number) => {
     const colors = [
-      "rgba(147, 51, 234, 0.7)", // Purple
-      "rgba(99, 102, 241, 0.7)", // Indigo
-      "rgba(236, 72, 153, 0.7)", // Pink
-      "rgba(139, 92, 246, 0.7)", // Violet
+      "rgba(147, 51, 234, 0.8)", // Purple
+      "rgba(99, 102, 241, 0.8)", // Indigo
+      "rgba(236, 72, 153, 0.8)", // Pink
+      "rgba(139, 92, 246, 0.8)", // Violet
     ]
 
     return colors[value % colors.length]
@@ -308,41 +350,89 @@ export function MathAsteroidBlaster() {
         playSound("wrong")
       }
 
-      if (lives <= 1) {
+      if (lives <= 0) {
         endGame()
       }
     }
   }
 
-  // Move the ship
-  const moveShip = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+  // Handle mouse movement for ship control
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (gameState !== "playing") return
 
     const gameArea = gameAreaRef.current
     if (!gameArea) return
 
-    let clientX: number
-
-    if ("touches" in e) {
-      // Touch event
-      clientX = e.touches[0].clientX
-    } else {
-      // Mouse event
-      clientX = e.clientX
-    }
-
     const rect = gameArea.getBoundingClientRect()
-    const x = clientX - rect.left
+    const x = e.clientX - rect.left
     const position = (x / gameArea.clientWidth) * 100
 
     // Clamp position between 0 and 100
     setShipPosition(Math.max(0, Math.min(100, position)))
   }
 
+  // Handle touch start for ship control
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (gameState !== "playing") return
+
+    setTouchStartX(e.touches[0].clientX)
+  }
+
+  // Handle touch move for ship control
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (gameState !== "playing") return
+
+    const gameArea = gameAreaRef.current
+    if (!gameArea) return
+
+    const touchX = e.touches[0].clientX
+    const deltaX = touchX - touchStartX
+
+    // Update touch start position
+    setTouchStartX(touchX)
+
+    // Calculate new ship position
+    const rect = gameArea.getBoundingClientRect()
+    const currentX = (shipPosition / 100) * gameArea.clientWidth
+    const newX = currentX + deltaX
+    const newPosition = (newX / gameArea.clientWidth) * 100
+
+    // Clamp position between 0 and 100
+    setShipPosition(Math.max(0, Math.min(100, newPosition)))
+  }
+
   // Play a sound effect
   const playSound = (type: "laser" | "explosion" | "wrong" | "levelUp") => {
-    // In a real implementation, we would play actual sounds
-    console.log(`Playing sound: ${type}`)
+    if (!soundEnabled || !audioRef.current[type]) return
+
+    // Clone the audio to allow overlapping sounds
+    const sound = audioRef.current[type].cloneNode() as HTMLAudioElement
+    sound.volume = 0.5
+    sound.play().catch((err) => console.error("Error playing sound:", err))
+  }
+
+  // Create confetti effect for level up
+  const createLevelUpEffect = () => {
+    const gameArea = gameAreaRef.current
+    if (!gameArea) return
+
+    // Create 50 confetti particles
+    for (let i = 0; i < 50; i++) {
+      const confetti = document.createElement("div")
+      confetti.className = "confetti"
+      confetti.style.left = `${Math.random() * 100}%`
+      confetti.style.top = `${Math.random() * 100}%`
+      confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 70%)`
+      confetti.style.width = `${Math.random() * 10 + 5}px`
+      confetti.style.height = `${Math.random() * 10 + 5}px`
+
+      gameArea.appendChild(confetti)
+
+      // Remove after animation
+      setTimeout(() => {
+        confetti.remove()
+      }, 2000)
+    }
   }
 
   // Main game loop
@@ -482,12 +572,17 @@ export function MathAsteroidBlaster() {
 
                   // Level up every 100 points
                   if (Math.floor(newScore / 100) > Math.floor(prev / 100)) {
-                    setLevel((prevLevel) => prevLevel + 1)
+                    setLevel((prevLevel) => {
+                      // Create level up effect
+                      createLevelUpEffect()
 
-                    // Play sound effect
-                    if (soundEnabled) {
-                      playSound("levelUp")
-                    }
+                      // Play sound effect
+                      if (soundEnabled) {
+                        playSound("levelUp")
+                      }
+
+                      return prevLevel + 1
+                    })
                   }
 
                   return newScore
@@ -547,18 +642,19 @@ export function MathAsteroidBlaster() {
         <div
           ref={gameAreaRef}
           className="relative w-full h-full overflow-hidden"
-          onMouseMove={gameState === "playing" ? moveShip : undefined}
-          onTouchMove={gameState === "playing" ? moveShip : undefined}
+          onMouseMove={handleMouseMove}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
         >
           {/* Game UI */}
           <div className="absolute top-0 left-0 right-0 z-20 flex justify-between items-center p-4">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-purple-900/50 backdrop-blur-sm">
+            <div className="flex items-center gap-2 md:gap-4 flex-wrap">
+              <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-purple-900/70 backdrop-blur-sm shadow-glow">
                 <Star className="h-4 w-4 text-yellow-500" />
                 <span className="text-white font-bold">{score}</span>
               </div>
 
-              <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-purple-900/50 backdrop-blur-sm">
+              <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-purple-900/70 backdrop-blur-sm shadow-glow">
                 <Zap className="h-4 w-4 text-yellow-500" />
                 <span className="text-white font-bold">Level {level}</span>
               </div>
@@ -567,18 +663,23 @@ export function MathAsteroidBlaster() {
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1">
                 {Array.from({ length: lives }).map((_, i) => (
-                  <Shield key={i} className="h-5 w-5 text-red-500" />
+                  <Shield key={i} className="h-5 w-5 text-red-500 drop-shadow-glow" />
                 ))}
               </div>
 
               <button
                 onClick={() => setSoundEnabled(!soundEnabled)}
-                className="p-2 rounded-full bg-purple-900/50 backdrop-blur-sm"
+                className="p-2 rounded-full bg-purple-900/70 backdrop-blur-sm hover:bg-purple-800/70 transition-colors"
+                aria-label={soundEnabled ? "Mute sound" : "Enable sound"}
               >
                 {soundEnabled ? <Volume2 className="h-4 w-4 text-white" /> : <VolumeX className="h-4 w-4 text-white" />}
               </button>
 
-              <button onClick={togglePause} className="p-2 rounded-full bg-purple-900/50 backdrop-blur-sm">
+              <button
+                onClick={togglePause}
+                className="p-2 rounded-full bg-purple-900/70 backdrop-blur-sm hover:bg-purple-800/70 transition-colors"
+                aria-label={gameState === "playing" ? "Pause game" : "Resume game"}
+              >
                 {gameState === "playing" ? (
                   <span className="h-4 w-4 block relative">
                     <span className="absolute inset-0 flex items-center justify-center">
@@ -590,13 +691,21 @@ export function MathAsteroidBlaster() {
                   <span className="h-0 w-0 border-t-transparent border-b-transparent border-l-white border-t-[6px] border-b-[6px] border-l-[10px] ml-0.5"></span>
                 )}
               </button>
+
+              <button
+                onClick={() => setShowTutorial(true)}
+                className="p-2 rounded-full bg-purple-900/70 backdrop-blur-sm hover:bg-purple-800/70 transition-colors"
+                aria-label="Show tutorial"
+              >
+                <HelpCircle className="h-4 w-4 text-white" />
+              </button>
             </div>
           </div>
 
           {/* Current problem */}
           {gameState === "playing" && currentProblem && (
             <div className="absolute top-16 left-0 right-0 z-20 flex justify-center">
-              <div className="px-4 py-2 rounded-lg bg-purple-900/70 backdrop-blur-sm text-white font-bold text-xl">
+              <div className="px-4 py-2 rounded-lg bg-purple-900/70 backdrop-blur-sm text-white font-bold text-xl shadow-glow">
                 {currentProblem.question} = ?
               </div>
             </div>
@@ -606,7 +715,7 @@ export function MathAsteroidBlaster() {
           {asteroids.map((asteroid) => (
             <div
               key={asteroid.id}
-              className="absolute rounded-full flex items-center justify-center"
+              className="absolute rounded-full flex items-center justify-center shadow-glow"
               style={{
                 left: `${asteroid.x}px`,
                 top: `${asteroid.y}px`,
@@ -628,7 +737,7 @@ export function MathAsteroidBlaster() {
           {lasers.map((laser) => (
             <div
               key={laser.id}
-              className="absolute rounded-full"
+              className="absolute rounded-full shadow-glow"
               style={{
                 left: `${laser.x - laser.size / 2}px`,
                 top: `${laser.y - laser.size * 2}px`,
@@ -676,7 +785,7 @@ export function MathAsteroidBlaster() {
                 <button
                   key={index}
                   onClick={() => fireLaser(option)}
-                  className="w-16 h-16 rounded-full bg-purple-900/70 backdrop-blur-sm text-white font-bold text-xl hover:bg-purple-700/70 transition-colors flex items-center justify-center"
+                  className="w-16 h-16 rounded-full bg-purple-900/70 backdrop-blur-sm text-white font-bold text-xl hover:bg-purple-700/70 transition-colors flex items-center justify-center shadow-glow border border-purple-500/30 active:transform active:scale-95"
                 >
                   {option}
                 </button>
@@ -690,7 +799,7 @@ export function MathAsteroidBlaster() {
               <h2 className="text-4xl font-bold text-white mb-4 gradient-text from-purple-500 to-pink-500">
                 Math Asteroid Blaster
               </h2>
-              <p className="text-white text-center max-w-md mb-8">
+              <p className="text-white text-center max-w-md mb-8 px-4">
                 Solve math problems and blast the asteroid with the correct answer before it hits your ship!
               </p>
 
@@ -702,13 +811,24 @@ export function MathAsteroidBlaster() {
                 </div>
               </div>
 
-              <Button
-                onClick={startGame}
-                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-                size="lg"
-              >
-                Start Game
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button
+                  onClick={startGame}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-glow"
+                  size="lg"
+                >
+                  Start Game
+                </Button>
+
+                <Button
+                  onClick={() => setShowTutorial(true)}
+                  variant="outline"
+                  className="border-purple-500/50 text-purple-300 hover:bg-purple-900/30"
+                  size="lg"
+                >
+                  How to Play
+                </Button>
+              </div>
             </div>
           )}
 
@@ -720,12 +840,16 @@ export function MathAsteroidBlaster() {
               <div className="flex gap-4">
                 <Button
                   onClick={togglePause}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-glow"
                 >
                   Resume
                 </Button>
 
-                <Button onClick={startGame} variant="outline">
+                <Button
+                  onClick={startGame}
+                  variant="outline"
+                  className="border-purple-500/50 text-purple-300 hover:bg-purple-900/30"
+                >
                   Restart
                 </Button>
               </div>
@@ -743,7 +867,8 @@ export function MathAsteroidBlaster() {
               </div>
 
               {score > highScore && (
-                <div className="px-4 py-2 rounded-lg bg-yellow-500/20 text-yellow-500 font-bold mb-8">
+                <div className="px-4 py-2 rounded-lg bg-yellow-500/20 text-yellow-500 font-bold mb-8 flex items-center gap-2">
+                  <Award className="h-5 w-5" />
                   New High Score!
                 </div>
               )}
@@ -751,14 +876,96 @@ export function MathAsteroidBlaster() {
               <div className="flex gap-4">
                 <Button
                   onClick={startGame}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-glow"
                 >
                   Play Again
                 </Button>
 
-                <Button onClick={() => (window.location.href = "/games")} variant="outline">
+                <Button
+                  onClick={() => (window.location.href = "/games")}
+                  variant="outline"
+                  className="border-purple-500/50 text-purple-300 hover:bg-purple-900/30"
+                >
                   Back to Games
                 </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Tutorial overlay */}
+          {showTutorial && (
+            <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/80 backdrop-blur-md p-4">
+              <div className="bg-background/95 rounded-xl p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-2xl font-bold gradient-text from-purple-500 to-pink-500">How to Play</h3>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowTutorial(false)}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-5 w-5" />
+                  </Button>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center mt-0.5">
+                      <span className="text-purple-500 font-bold">1</span>
+                    </div>
+                    <p className="flex-1">Solve the math problem at the top of the screen.</p>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center mt-0.5">
+                      <span className="text-purple-500 font-bold">2</span>
+                    </div>
+                    <p className="flex-1">
+                      Click the button with the correct answer to fire your laser at the matching asteroid.
+                    </p>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center mt-0.5">
+                      <span className="text-purple-500 font-bold">3</span>
+                    </div>
+                    <p className="flex-1">
+                      {isMobile
+                        ? "Move your ship by sliding your finger across the game area."
+                        : "Move your ship by moving your mouse across the game area."}
+                    </p>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center mt-0.5">
+                      <span className="text-purple-500 font-bold">4</span>
+                    </div>
+                    <p className="flex-1">
+                      Don't let the correct answer asteroid reach the bottom, or you'll lose a life!
+                    </p>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center mt-0.5">
+                      <span className="text-purple-500 font-bold">5</span>
+                    </div>
+                    <p className="flex-1">
+                      Level up by scoring points. Each level increases the difficulty and point value!
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex justify-center">
+                  <Button
+                    onClick={() => {
+                      setShowTutorial(false)
+                      if (gameState === "start") startGame()
+                    }}
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                  >
+                    {gameState === "start" ? "Start Game" : "Got it!"}
+                  </Button>
+                </div>
               </div>
             </div>
           )}
@@ -790,7 +997,11 @@ export function MathAsteroidBlaster() {
             <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center mt-0.5">
               <span className="text-purple-500 font-bold">3</span>
             </div>
-            <p className="flex-1">Move your ship by moving your mouse or finger across the game area.</p>
+            <p className="flex-1">
+              {isMobile
+                ? "Move your ship by sliding your finger across the game area."
+                : "Move your ship by moving your mouse across the game area."}
+            </p>
           </div>
 
           <div className="flex items-start gap-3">
@@ -804,4 +1015,3 @@ export function MathAsteroidBlaster() {
     </div>
   )
 }
-

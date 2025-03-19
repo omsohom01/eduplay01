@@ -10,12 +10,13 @@ import {
   Globe,
   Brain,
 } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 export default function SubjectsPage() {
   const subjects = [
     {
       title: "Mathematics",
-      description: "Fun puzzles and games that teach numbers, counting, and problem-solving.",
+      description: "Learn about numbers, counting, and problem-solving with interactive lessons.",
       icon: Calculator,
       slug: "math",
       color: "text-math",
@@ -25,7 +26,7 @@ export default function SubjectsPage() {
     },
     {
       title: "Science",
-      description: "Exciting experiments and discoveries about the natural world.",
+      description: "Discover the natural world through engaging educational content.",
       icon: Flask,
       slug: "science",
       color: "text-science",
@@ -35,7 +36,7 @@ export default function SubjectsPage() {
     },
     {
       title: "Reading",
-      description: "Interactive stories and activities to build literacy skills.",
+      description: "Build literacy skills with comprehensive reading materials.",
       icon: BookOpen,
       slug: "reading",
       color: "text-reading",
@@ -45,7 +46,7 @@ export default function SubjectsPage() {
     },
     {
       title: "Coding",
-      description: "Beginner-friendly programming challenges and logic puzzles.",
+      description: "Understand programming concepts with detailed explanations.",
       icon: Code,
       slug: "coding",
       color: "text-coding",
@@ -55,7 +56,7 @@ export default function SubjectsPage() {
     },
     {
       title: "Art",
-      description: "Creative activities to explore drawing, colors, and artistic expression.",
+      description: "Explore artistic concepts, techniques, and creative expression.",
       icon: Palette,
       slug: "art",
       color: "text-art",
@@ -65,7 +66,7 @@ export default function SubjectsPage() {
     },
     {
       title: "Music",
-      description: "Fun ways to learn about rhythm, sounds, and musical instruments.",
+      description: "Learn about rhythm, sounds, and musical concepts.",
       icon: Music,
       slug: "music",
       color: "text-music",
@@ -75,7 +76,7 @@ export default function SubjectsPage() {
     },
     {
       title: "Geography",
-      description: "Explore countries, cultures, and natural wonders around the world.",
+      description: "Study countries, cultures, and natural wonders around the world.",
       icon: Globe,
       slug: "geography",
       color: "text-geography",
@@ -85,7 +86,7 @@ export default function SubjectsPage() {
     },
     {
       title: "Logic",
-      description: "Brain teasers and puzzles to develop critical thinking skills.",
+      description: "Develop critical thinking and reasoning skills.",
       icon: Brain,
       slug: "logic",
       color: "text-logic",
@@ -95,7 +96,7 @@ export default function SubjectsPage() {
     },
     {
       title: "C Programming",
-      description: "Learn the fundamentals of C programming language.",
+      description: "Study the fundamentals of C programming language.",
       icon: Code,
       slug: "c_programming",
       color: "text-coding",
@@ -105,7 +106,7 @@ export default function SubjectsPage() {
     },
     {
       title: "Python",
-      description: "Discover Python programming with fun, interactive lessons.",
+      description: "Learn Python programming with comprehensive lessons.",
       icon: Code,
       slug: "python",
       color: "text-coding",
@@ -132,14 +133,14 @@ export default function SubjectsPage() {
         <div className="relative z-10 flex flex-col items-center justify-center space-y-4 text-center">
           <div className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-2">
             <BookOpen className="h-3.5 w-3.5 mr-1.5" />
-            <span>Knowledge Explorer</span>
+            <span>Learning Explorer</span>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight gradient-text from-primary via-purple-500 to-pink-500">
             Explore Our Subjects
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl">
-            Discover a world of knowledge with our comprehensive subject offerings. Each subject features interactive
-            games and activities designed to make learning fun.
+            Discover a world of knowledge with our comprehensive subject offerings. Each subject features educational
+            content followed by timed quizzes to test your understanding.
           </p>
         </div>
       </div>
@@ -162,7 +163,7 @@ export default function SubjectsPage() {
                   <span
                     className={`gradient-text ${subject.gradientText} opacity-0 group-hover:opacity-100 transition-opacity`}
                   >
-                    Explore {subject.title}
+                    Learn {subject.title}
                   </span>
                   <ArrowRight
                     className={`ml-1 h-4 w-4 ${subject.color} opacity-0 group-hover:opacity-100 transition-opacity`}
@@ -173,7 +174,30 @@ export default function SubjectsPage() {
           </Link>
         ))}
       </div>
+      <div className="mt-16 relative overflow-hidden rounded-xl bg-gradient-to-br from-primary/20 to-purple-600/20 p-8 pattern-diagonal">
+        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <Brain className="h-5 w-5 text-primary" />
+              <span className="text-primary font-medium">Want to test your knowledge?</span>
+            </div>
+            <h3 className="text-2xl font-bold mb-2">Take a Quiz Instead</h3>
+            <p className="text-muted-foreground">
+              If you're ready to test your knowledge, try our interactive quizzes on various subjects.
+            </p>
+          </div>
+          <Button
+            asChild
+            size="lg"
+            className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+          >
+            <Link href="/quiz">
+              Go to Quizzes
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }
-

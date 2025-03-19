@@ -3,13 +3,14 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ArrowLeft, RefreshCw } from "lucide-react"
+import { ArrowLeft, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Progress } from "@/components/ui/progress"
 import { QuizEngine } from "@/components/quiz-engine"
 import { GoogleGenerativeAI } from "@google/generative-ai"
 
 // Initialize the Gemini API
-const GEMINI_API_KEY = "AIzaSyDiaCC3dAZS8ZiDU1uF8YfEu9PoWy8YLoA"
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "AIzaSyDiaCC3dAZS8ZiDU1uF8YfEu9PoWy8YLoA"
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY)
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
 
@@ -444,6 +445,44 @@ const topicsData = {
       ageRange: "11-12",
     },
   },
+  movies: {
+    film_history: {
+      title: "Film History",
+      description: "Learn about the evolution of movies from silent films to modern cinema",
+      subject: "Movies",
+      subjectSlug: "movies",
+      subjectColor: "bg-primary",
+      level: "Intermediate",
+      ageRange: "8-12",
+    },
+    genres: {
+      title: "Movie Genres",
+      description: "Explore different types of movies and their characteristics",
+      subject: "Movies",
+      subjectSlug: "movies",
+      subjectColor: "bg-primary",
+      level: "Beginner",
+      ageRange: "6-10",
+    },
+    animation: {
+      title: "Animation",
+      description: "Discover how animated movies are made and their history",
+      subject: "Movies",
+      subjectSlug: "movies",
+      subjectColor: "bg-primary",
+      level: "Beginner",
+      ageRange: "5-9",
+    },
+    storytelling: {
+      title: "Storytelling in Film",
+      description: "Learn how movies tell stories through visuals and sound",
+      subject: "Movies",
+      subjectSlug: "movies",
+      subjectColor: "bg-primary",
+      level: "Intermediate",
+      ageRange: "8-12",
+    },
+  },
 }
 
 interface Question {
@@ -454,56 +493,16 @@ interface Question {
   id?: string
 }
 
-// Function to fetch questions using the Gemini API
-const fetchQuestions = async (subject: string, topic: string): Promise<Question[]> => {
-  const prompt = `Generate exactly 5 multiple-choice quiz questions on the topic "${topic}" under the subject "${subject}".
-  Each question must have:
-  - A clear question text.
-  - Four answer choices.
-  - The index of the correct answer (0, 1, 2, or 3).
-  - A short explanation.
-
-  Return ONLY valid JSON formatted like this:
-  [
-    {
-      "question": "What is 2 + 2?",
-      "options": ["1", "2", "3", "4"],
-      "correctAnswer": 3,
-      "explanation": "2 + 2 equals 4."
-    }
-  ]`
-
-  try {
-    const result = await model.generateContent(prompt)
-    let responseText = result.response.text()
-    console.log("💡 AI Raw Response:", responseText)
-
-    // Fix: Remove unnecessary formatting (code blocks, newlines)
-    responseText = responseText.replace(/```json|```/g, "").trim()
-
-    // Ensure the response is valid JSON
-    const parsedQuestions: Question[] = JSON.parse(responseText)
-
-    // Add unique IDs to each question
-    const questionsWithIds = parsedQuestions.map((q, index) => ({
-      ...q,
-      id: `${subject}-${topic}-${Date.now()}-${index}`,
-    }))
-
-    return Array.isArray(questionsWithIds) ? questionsWithIds : []
-  } catch (error) {
-    console.error("❌ Error fetching questions:", error)
-    return []
-  }
-}
-
 export default function TopicPage({ params }: { params: { subject: string; topic: string } }) {
-  const { subject, topic } = params
   const [mounted, setMounted] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [educationalContent, setEducationalContent] = useState("")
+  const [readingComplete, setReadingComplete] = useState(false)
   const [questions, setQuestions] = useState<Question[]>([])
+  const [timeLimit, setTimeLimit] = useState(0)
+  const [timeRemaining, setTimeRemaining] = useState(0)
+  const [timerActive, setTimerActive] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [generationCount, setGenerationCount] = useState(0)
 
   useEffect(() => {
     setMounted(true)
@@ -512,46 +511,145 @@ export default function TopicPage({ params }: { params: { subject: string; topic
   // Check if the subject and topic exist in our data
   if (
     mounted &&
-    (!topicsData[subject as keyof typeof topicsData] || !topicsData[subject as keyof typeof topicsData][topic as any])
+    (!topicsData[params.subject as keyof typeof topicsData] ||
+      !topicsData[params.subject as keyof typeof topicsData][params.topic as any])
   ) {
     notFound()
   }
 
-  // Function to generate new questions
-  const generateNewQuestions = async () => {
-    setLoading(true)
-    setError(null)
-
-    try {
-      console.log(`Generating questions for ${topic} (${subject}) - Generation #${generationCount + 1}`)
-
-      const generatedQuestions = await fetchQuestions(subject, topic)
-
-      if (!generatedQuestions || generatedQuestions.length === 0) {
-        throw new Error("No questions were generated. Please try again.")
-      }
-
-      console.log(`Successfully generated ${generatedQuestions.length} questions`)
-      setQuestions(generatedQuestions)
-      setGenerationCount((prev) => prev + 1)
-    } catch (err) {
-      console.error("Error generating questions:", err)
-      setError("Failed to generate questions. Please try again.")
-    } finally {
-      setLoading(false)
-    }
-  }
-
+  // Generate educational content and questions
   useEffect(() => {
     if (!mounted) return
-    generateNewQuestions()
-  }, [mounted, subject, topic])
 
-  if (!mounted || loading) {
+    const generateContent = async () => {
+      setLoading(true)
+      setError(null)
+
+      try {
+        const topicData = topicsData[params.subject as keyof typeof topicsData][params.topic as any]
+
+        // Generate educational content
+        const contentPrompt = `
+          Create an educational lesson about "${topicData.title}" for ${topicData.subject}.
+          This is for children aged ${topicData.ageRange}.
+          
+          Write a comprehensive but engaging explanation that:
+          1. Introduces the topic in a child-friendly way
+          2. Explains key concepts clearly with examples
+          3. Uses simple language appropriate for the age range
+          4. Includes some interesting facts that children would find engaging
+          5. Is about 3-4 paragraphs long (300-500 words)
+          
+          Format the content with proper paragraphs and make it visually readable.
+        `
+
+        const contentResult = await model.generateContent(contentPrompt)
+        const content = contentResult.response.text()
+        setEducationalContent(content)
+
+        // Generate quiz questions
+        const questionsPrompt = `
+          Create 10 multiple-choice quiz questions about "${topicData.title}" for ${topicData.subject}.
+          These questions are for children aged ${topicData.ageRange} with ${topicData.level} level knowledge.
+          
+          Each question must have:
+          - A clear question text
+          - Four answer choices
+          - The index of the correct answer (0-3)
+          - A brief explanation of why the answer is correct
+          
+          Return ONLY valid JSON formatted like this:
+          [
+            {
+              "question": "What is 2 + 2?",
+              "options": ["3", "4", "5", "6"],
+              "correctAnswer": 1,
+              "explanation": "2 + 2 equals 4."
+            }
+          ]
+        `
+
+        const questionsResult = await model.generateContent(questionsPrompt)
+        let responseText = questionsResult.response.text()
+
+        // Fix: Remove unnecessary formatting
+        responseText = responseText.replace(/```json|```/g, "").trim()
+
+        // Parse the JSON
+        const parsedQuestions: Question[] = JSON.parse(responseText)
+
+        // Add unique IDs
+        const questionsWithIds = parsedQuestions.map((q, index) => ({
+          ...q,
+          id: `${params.subject}-${params.topic}-${Date.now()}-${index}`,
+        }))
+
+        setQuestions(questionsWithIds)
+
+        // Determine appropriate time limit based on difficulty and age
+        let recommendedTime = 0
+        if (topicData.level === "Beginner") {
+          recommendedTime = 120 // 2 minutes for beginners
+        } else if (topicData.level === "Intermediate") {
+          recommendedTime = 180 // 3 minutes for intermediate
+        } else {
+          recommendedTime = 240 // 4 minutes for advanced
+        }
+
+        setTimeLimit(recommendedTime)
+        setTimeRemaining(recommendedTime)
+      } catch (err) {
+        console.error("Error generating content:", err)
+        setError("Failed to generate content. Please try again.")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    generateContent()
+  }, [mounted, params.subject, params.topic])
+
+  // Timer effect
+  useEffect(() => {
+    if (timerActive && timeRemaining > 0) {
+      const timer = setTimeout(() => {
+        setTimeRemaining(timeRemaining - 1)
+      }, 1000)
+      return () => clearTimeout(timer)
+    } else if (timerActive && timeRemaining === 0) {
+      // Time's up
+      setTimerActive(false)
+    }
+  }, [timerActive, timeRemaining])
+
+  // Format time as MM:SS
+  const formatTime = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = seconds % 60
+    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`
+  }
+
+  const startQuiz = () => {
+    setReadingComplete(true)
+    setTimerActive(true)
+  }
+
+  const topicData = topicsData[params.subject as keyof typeof topicsData]?.[params.topic as any]
+
+  if (!mounted) {
     return (
       <div className="container py-12 flex items-center justify-center min-h-[60vh]">
         <div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
-        <span className="ml-3 text-muted-foreground">Generating questions...</span>
+        <span className="ml-3 text-muted-foreground">Loading...</span>
+      </div>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="container py-12 flex items-center justify-center min-h-[60vh]">
+        <div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+        <span className="ml-3 text-muted-foreground">Generating educational content...</span>
       </div>
     )
   }
@@ -560,70 +658,97 @@ export default function TopicPage({ params }: { params: { subject: string; topic
     return (
       <div className="container py-12 flex flex-col items-center justify-center min-h-[60vh]">
         <div className="text-red-500 mb-4">⚠️ {error}</div>
-        <button
-          onClick={generateNewQuestions}
+        <Button
+          onClick={() => window.location.reload()}
           className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
         >
           Try Again
-        </button>
+        </Button>
       </div>
     )
   }
-
-  const topicData = topicsData[subject as keyof typeof topicsData][topic as any]
 
   return (
     <div className="container py-12 md:py-20">
       <div className="mb-8">
         <Link
-          href={`/subjects/${subject}`}
+          href={`/subjects/${params.subject}`}
           className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground mb-4"
         >
           <ArrowLeft className="mr-1 h-4 w-4" />
-          Back to {topicData.subject}
+          Back to {topicData?.subject}
         </Link>
 
         <div className="relative overflow-hidden rounded-xl bg-secondary/30 border border-secondary p-8 mb-12">
           <div className="absolute inset-0 pattern-dots opacity-10"></div>
           <div className="relative z-10">
             <div className="flex items-center gap-2 mb-2">
-              <div className={`px-2 py-0.5 rounded-full text-xs font-medium ${topicData.subjectColor} text-white`}>
-                {topicData.level}
+              <div className={`px-2 py-0.5 rounded-full text-xs font-medium ${topicData?.subjectColor} text-white`}>
+                {topicData?.level}
               </div>
-              <div className="text-xs text-muted-foreground">Ages {topicData.ageRange}</div>
+              <div className="text-xs text-muted-foreground">Ages {topicData?.ageRange}</div>
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold mb-4">{topicData.title}</h1>
-            <p className="text-lg text-muted-foreground max-w-3xl">{topicData.description}</p>
+            <h1 className="text-3xl md:text-4xl font-bold mb-4">{topicData?.title}</h1>
+            <p className="text-lg text-muted-foreground max-w-3xl">{topicData?.description}</p>
           </div>
         </div>
 
-        {questions.length > 0 ? (
-          <QuizEngine
-            questions={questions}
-            subjectColor={topicData.subjectColor}
-            onComplete={(score, total) => {
-              console.log(`Quiz completed with score ${score}/${total}`)
-              // Here you would typically save the progress to a database
-            }}
-          />
+        {!readingComplete ? (
+          <div className="p-6 rounded-xl bg-secondary/30 border border-secondary">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold mb-4">Educational Content</h2>
+              <div className="prose prose-sm dark:prose-invert max-w-none">
+                {educationalContent.split("\n\n").map((paragraph, index) => (
+                  <p key={index}>{paragraph}</p>
+                ))}
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <Button onClick={startQuiz} className={`${topicData?.subjectColor} text-white`}>
+                I've Read This - Start Quiz
+              </Button>
+            </div>
+          </div>
         ) : (
-          <div className="p-8 rounded-xl bg-secondary/30 border border-secondary text-center">
-            <p className="text-muted-foreground">No questions available for this topic yet.</p>
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <div className="text-sm font-medium text-muted-foreground">Timed Quiz: {questions.length} questions</div>
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-primary" />
+                <div className={`text-sm font-medium ${timeRemaining < 30 ? "text-red-500" : ""}`}>
+                  Time Remaining: {formatTime(timeRemaining)}
+                </div>
+              </div>
+            </div>
+
+            <Progress value={(timeRemaining / timeLimit) * 100} className="h-1.5 bg-secondary" />
+
+            {timerActive ? (
+              <QuizEngine
+                questions={questions}
+                subjectColor={topicData?.subjectColor || "bg-primary"}
+                subject={params.subject}
+                topic={params.topic}
+                onComplete={(score, total) => {
+                  setTimerActive(false)
+                  console.log(`Quiz completed with score ${score}/${total}`)
+                }}
+              />
+            ) : timeRemaining === 0 ? (
+              <div className="p-8 rounded-xl bg-secondary/30 border border-secondary text-center">
+                <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+                  <Clock className="h-8 w-8 text-red-500" />
+                </div>
+                <h2 className="text-2xl font-bold mb-2">Time's Up!</h2>
+                <p className="text-muted-foreground mb-6">
+                  You've run out of time for this quiz. Would you like to try again?
+                </p>
+                <Button onClick={() => window.location.reload()}>Try Again</Button>
+              </div>
+            ) : null}
           </div>
         )}
-
-        <div className="mt-8 flex justify-center">
-          <Button
-            onClick={generateNewQuestions}
-            className={`${topicData.subjectColor} text-white flex items-center gap-2`}
-            disabled={loading}
-          >
-            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-            Generate New Questions
-          </Button>
-        </div>
       </div>
     </div>
   )
 }
-

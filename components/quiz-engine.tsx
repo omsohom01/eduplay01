@@ -1,10 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { CheckCircle, XCircle, ChevronRight, Award, AlertCircle, RefreshCw } from "lucide-react"
 import confetti from "canvas-confetti"
+import { useAuth } from "@/contexts/auth-context"
+import { logActivity } from "@/lib/user-service"
 
 interface Question {
   id: string
@@ -14,32 +16,113 @@ interface Question {
   explanation?: string
 }
 
+// Update the QuizEngineProps interface to include timeLimit
 interface QuizEngineProps {
   questions: Question[]
   subjectColor: string
+  subject?: string
+  topic?: string
+  difficulty?: string
+  timeLimit?: number
   onComplete?: (score: number, totalQuestions: number) => void
 }
 
-export function QuizEngine({ questions, subjectColor, onComplete }: QuizEngineProps) {
+// Add timeLimit to the destructured props
+export function QuizEngine({
+  questions,
+  subjectColor,
+  subject,
+  topic,
+  difficulty,
+  timeLimit,
+  onComplete,
+}: QuizEngineProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [selectedOption, setSelectedOption] = useState<number | null>(null)
   const [isAnswerChecked, setIsAnswerChecked] = useState(false)
   const [score, setScore] = useState(0)
   const [quizCompleted, setQuizCompleted] = useState(false)
   const [showExplanation, setShowExplanation] = useState(false)
+  const [startTime, setStartTime] = useState<number>(Date.now())
+  const [activeTime, setActiveTime] = useState(0)
+  const { user } = useAuth()
+
+  // Use a ref to track active time
+  const lastActivityTime = useRef<number>(Date.now())
+  const activityTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const currentQuestion = questions[currentQuestionIndex]
   const progress = ((currentQuestionIndex + 1) / questions.length) * 100
 
+  // Update the useEffect for the timer to use the timeLimit prop if provided
+  useEffect(() => {
+    setStartTime(Date.now())
+    lastActivityTime.current = Date.now()
+
+    // Start tracking active time
+    activityTimerRef.current = setInterval(() => {
+      // Only count time if there was activity in the last 60 seconds
+      const now = Date.now()
+      const idleTime = now - lastActivityTime.current
+
+      // If user has been active recently (less than 60 seconds of idle time)
+      if (idleTime < 60000) {
+        setActiveTime((prev) => prev + 1) // Increment by 1 second
+      }
+    }, 1000)
+
+    // If timeLimit is provided, set up a timer to end the quiz when time is up
+    if (timeLimit) {
+      const timer = setTimeout(() => {
+        completeQuiz()
+      }, timeLimit * 1000)
+
+      return () => {
+        if (activityTimerRef.current) {
+          clearInterval(activityTimerRef.current)
+        }
+        clearTimeout(timer)
+      }
+    }
+
+    return () => {
+      if (activityTimerRef.current) {
+        clearInterval(activityTimerRef.current)
+      }
+    }
+  }, [timeLimit])
+
+  // Track user activity
+  const recordActivity = () => {
+    lastActivityTime.current = Date.now()
+  }
+
+  // Record activity on user interactions
+  useEffect(() => {
+    const handleActivity = () => recordActivity()
+
+    window.addEventListener("mousedown", handleActivity)
+    window.addEventListener("keydown", handleActivity)
+    window.addEventListener("touchstart", handleActivity)
+
+    return () => {
+      window.removeEventListener("mousedown", handleActivity)
+      window.removeEventListener("keydown", handleActivity)
+      window.removeEventListener("touchstart", handleActivity)
+    }
+  }, [])
+
   const handleOptionSelect = (index: number) => {
     if (!isAnswerChecked) {
       setSelectedOption(index)
+      recordActivity()
     }
   }
 
   const checkAnswer = () => {
     if (selectedOption === null) return
 
+    recordActivity()
     setIsAnswerChecked(true)
 
     if (selectedOption === currentQuestion.correctAnswer) {
@@ -57,16 +140,47 @@ export function QuizEngine({ questions, subjectColor, onComplete }: QuizEnginePr
   }
 
   const nextQuestion = () => {
+    recordActivity()
+
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1)
       setSelectedOption(null)
       setIsAnswerChecked(false)
       setShowExplanation(false)
     } else {
-      setQuizCompleted(true)
-      if (onComplete) {
-        onComplete(score + (selectedOption === currentQuestion.correctAnswer ? 1 : 0), questions.length)
-      }
+      completeQuiz()
+    }
+  }
+
+  // Update the logActivity function call in the completeQuiz function to include difficulty
+  const completeQuiz = () => {
+    setQuizCompleted(true)
+
+    // Stop the activity timer
+    if (activityTimerRef.current) {
+      clearInterval(activityTimerRef.current)
+    }
+
+    const finalScore = score + (selectedOption === currentQuestion.correctAnswer ? 1 : 0)
+
+    // Use the tracked active time instead of elapsed time
+    const timeSpent = activeTime
+
+    // Log activity to MongoDB if user is logged in
+    if (user && subject) {
+      logActivity(user.id, {
+        type: "quiz",
+        subject,
+        topic,
+        difficulty: difficulty || "standard",
+        score: finalScore,
+        totalQuestions: questions.length,
+        timeSpent,
+      })
+    }
+
+    if (onComplete) {
+      onComplete(finalScore, questions.length)
     }
   }
 
@@ -207,6 +321,21 @@ export function QuizEngine({ questions, subjectColor, onComplete }: QuizEnginePr
                 setScore(0)
                 setQuizCompleted(false)
                 setShowExplanation(false)
+                setStartTime(Date.now())
+                setActiveTime(0)
+                lastActivityTime.current = Date.now()
+
+                // Restart activity tracking
+                if (activityTimerRef.current) {
+                  clearInterval(activityTimerRef.current)
+                }
+                activityTimerRef.current = setInterval(() => {
+                  const now = Date.now()
+                  const idleTime = now - lastActivityTime.current
+                  if (idleTime < 60000) {
+                    setActiveTime((prev) => prev + 1)
+                  }
+                }, 1000)
               }}
               className="flex items-center gap-2"
             >
@@ -222,4 +351,3 @@ export function QuizEngine({ questions, subjectColor, onComplete }: QuizEnginePr
     </div>
   )
 }
-

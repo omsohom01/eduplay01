@@ -747,4 +747,3 @@ export function WordScrambleChallenge() {
     </div>
   )
 }
-
