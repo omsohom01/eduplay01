@@ -1,81 +1,69 @@
+// User service functions
+
 export interface UserProgress {
-  math: number
-  science: number
-  reading: number
-  coding: number
-  art: number
-  music: number
-  geography: number
-  logic: number
-  movies: number
-  c_programming: number
-  python: number
-  java: number
+  [subject: string]: number // Progress percentage for each subject
 }
 
 export interface UserStats {
   totalQuizzesTaken: number
   totalQuestionsAnswered: number
   correctAnswers: number
-  totalTimeSpent: number
+  totalTimeSpent: number // in seconds
   gamesPlayed: number
+  lastActive: Date
 }
 
-export interface ActivityLog {
-  type: "quiz" | "game"
+export interface UserActivity {
+  id: string
+  type: string // 'quiz', 'game', 'video', etc.
   subject?: string
   topic?: string
   score?: number
-  totalQuestions?: number
-  timeSpent: number
+  timeSpent: number // in seconds
+  timestamp: Date
 }
 
-// Update the getUserData function to properly handle MongoDB data
+export interface UserData {
+  id: string
+  name: string
+  email: string
+  age?: number
+  progress: UserProgress
+  stats: UserStats
+  activities: UserActivity[]
+  createdAt: Date
+  updatedAt: Date
+}
 
-export async function getUserData(userId: string) {
+// Get user data
+export async function getUserData(userId: string): Promise<UserData | null> {
   try {
-    const response = await fetch(`/api/user`)
+    const response = await fetch(`/api/user/data?userId=${userId}`)
+
     if (!response.ok) {
       throw new Error("Failed to fetch user data")
     }
+
     const data = await response.json()
-    return data.user
+    return data.userData
   } catch (error) {
-    console.error("Error getting user data:", error)
-    return {
-      progress: {
-        math: 0,
-        science: 0,
-        reading: 0,
-        coding: 0,
-        art: 0,
-        music: 0,
-        geography: 0,
-        logic: 0,
-        movies: 0,
-        c_programming: 0,
-        python: 0,
-        java: 0,
-      },
-      stats: {
-        totalQuizzesTaken: 0,
-        totalQuestionsAnswered: 0,
-        correctAnswers: 0,
-        totalTimeSpent: 0,
-        gamesPlayed: 0,
-      },
-    }
+    console.error("Error fetching user data:", error)
+    return null
   }
 }
 
-export async function updateUserProfile(name: string) {
+// Update user profile
+export async function updateUserProfile(name: string, age?: number): Promise<boolean> {
   try {
     const response = await fetch("/api/user", {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({
+        name,
+        age,
+      }),
     })
 
     if (!response.ok) {
@@ -89,7 +77,8 @@ export async function updateUserProfile(name: string) {
   }
 }
 
-export async function updateUserProgress(subject: string, progress: number) {
+// Update user progress
+export async function updateUserProgress(subject: string, progress: number): Promise<boolean> {
   try {
     const response = await fetch("/api/user/progress", {
       method: "POST",
@@ -110,19 +99,19 @@ export async function updateUserProgress(subject: string, progress: number) {
   }
 }
 
-// Update the logActivity function to include difficulty
+// Log user activity
 export async function logActivity(
   userId: string,
-  activity: {
-    type: "quiz" | "game"
+  activityData: {
+    type: string
     subject?: string
     topic?: string
-    difficulty?: string
     score?: number
     totalQuestions?: number
     timeSpent: number
+    difficulty?: string
   },
-) {
+): Promise<boolean> {
   try {
     const response = await fetch("/api/user/activity", {
       method: "POST",
@@ -130,11 +119,7 @@ export async function logActivity(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        userId,
-        activity: {
-          ...activity,
-          difficulty: activity.difficulty || "standard", // Add default difficulty
-        },
+        ...activityData,
       }),
     })
 
@@ -142,16 +127,17 @@ export async function logActivity(
       throw new Error("Failed to log activity")
     }
 
-    return await response.json()
+    return true
   } catch (error) {
     console.error("Error logging activity:", error)
-    return null
+    return false
   }
 }
 
-export async function getUserActivities(limit = 10) {
+// Get user activities
+export async function getUserActivities(): Promise<UserActivity[]> {
   try {
-    const response = await fetch(`/api/user/activity?limit=${limit}`)
+    const response = await fetch("/api/user/activity")
 
     if (!response.ok) {
       throw new Error("Failed to fetch activities")
@@ -160,7 +146,8 @@ export async function getUserActivities(limit = 10) {
     const data = await response.json()
     return data.activities
   } catch (error) {
-    console.error("Error getting activities:", error)
+    console.error("Error fetching activities:", error)
     return []
   }
 }
+

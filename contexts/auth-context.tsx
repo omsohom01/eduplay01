@@ -12,7 +12,7 @@ interface User {
 interface AuthContextType {
   user: User | null
   loading: boolean
-  login: (email: string, password: string) => Promise<void>
+  login: (email: string, password: string, age?: number) => Promise<void>
   signup: (name: string, email: string, password: string) => Promise<void>
   logout: () => Promise<void>
   error: string | null
@@ -45,27 +45,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     checkUserLoggedIn()
   }, [])
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, age?: number) => {
+    setLoading(true)
     setError(null)
+
     try {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, age }),
       })
 
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || "Login failed")
+        throw new Error(data.error || "Failed to login")
       }
 
       setUser(data.user)
       router.push("/dashboard")
     } catch (error: any) {
       setError(error.message)
+      setUser(null)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -117,3 +122,4 @@ export function useAuth() {
   }
   return context
 }
+

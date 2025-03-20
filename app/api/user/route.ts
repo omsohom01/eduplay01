@@ -41,13 +41,14 @@ export async function PATCH(req: NextRequest) {
     }
 
     const userId = session.id
-    const { name } = await req.json()
+    const { name, age } = await req.json()
 
     const client = await clientPromise
     const db = client.db()
 
     const updateData: Record<string, any> = {}
     if (name) updateData.name = name
+    if (age !== undefined) updateData.age = age
 
     const result = await db.collection("users").updateOne({ _id: new ObjectId(userId) }, { $set: updateData })
 
@@ -76,3 +77,4 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "An error occurred while updating user data." }, { status: 500 })
   }
 }
+

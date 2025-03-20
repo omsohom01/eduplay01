@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import Link from "next/link"
 import { useAuth } from "@/contexts/auth-context"
@@ -16,14 +15,22 @@ export default function SignInPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const { login, error } = useAuth()
+  const { login, error, setError } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!email || !password) {
+      setError("Please fill in all fields.")
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
       await login(email, password)
+    } catch (err) {
+      setError("Failed to sign in. Please check your credentials.")
     } finally {
       setIsSubmitting(false)
     }

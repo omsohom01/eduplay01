@@ -1,51 +1,4 @@
-import type { ObjectId } from "mongodb"
-import bcrypt from "bcryptjs"
-
-export interface User {
-  _id?: ObjectId
-  name: string
-  email: string
-  password?: string
-  createdAt: Date
-  lastLogin: Date
-  progress: UserProgress
-  stats: UserStats
-}
-
-export interface UserProgress {
-  math: number
-  science: number
-  reading: number
-  coding: number
-  art: number
-  music: number
-  geography: number
-  logic: number
-  movies: number
-  c_programming: number
-  python: number
-  java: number
-}
-
-export interface UserStats {
-  totalQuizzesTaken: number
-  totalQuestionsAnswered: number
-  correctAnswers: number
-  totalTimeSpent: number
-  gamesPlayed: number
-}
-
-export interface ActivityLog {
-  userId: string
-  type: "quiz" | "game"
-  subject?: string
-  topic?: string
-  difficulty?: string
-  score?: number
-  totalQuestions?: number
-  timeSpent: number
-  timestamp: Date
-}
+import { compare, hash } from "bcryptjs"
 
 export interface UserSession {
   id: string
@@ -54,25 +7,21 @@ export interface UserSession {
 }
 
 export async function hashPassword(password: string): Promise<string> {
-  return await bcrypt.hash(password, 12)
+  const hashedPassword = await hash(password, 12)
+  return hashedPassword
 }
 
 export async function comparePassword(password: string, hashedPassword: string): Promise<boolean> {
-  return await bcrypt.compare(password, hashedPassword)
+  const isValid = await compare(password, hashedPassword)
+  return isValid
 }
 
-export function sanitizeUser(user: User): UserSession {
-  return {
-    id: user._id?.toString() || "",
-    name: user.name,
-    email: user.email,
-  }
+export function sanitizeUser(user: any): UserSession {
+  return { id: user._id.toString(), name: user.name, email: user.email }
 }
 
-export function createDefaultUserData(): Omit<User, "_id" | "email" | "name" | "password"> {
+export function createDefaultUserData() {
   return {
-    createdAt: new Date(),
-    lastLogin: new Date(),
     progress: {
       math: 0,
       science: 0,
@@ -93,6 +42,9 @@ export function createDefaultUserData(): Omit<User, "_id" | "email" | "name" | "
       correctAnswers: 0,
       totalTimeSpent: 0,
       gamesPlayed: 0,
+      subjectsExplored: 0,
+      topicsStudied: 0,
     },
   }
 }
+

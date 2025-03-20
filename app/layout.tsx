@@ -2,17 +2,16 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
-import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
-import { AuthProvider } from "@/contexts/auth-context"
 import { ThemeProvider } from "@/components/theme-provider"
+import { Navbar } from "@/components/navbar"
+import { AuthProvider } from "@/contexts/auth-context"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "EduPlay AI Learning Companion",
-  description: "Interactive educational platform for children aged 3-12",
-    generator: 'v0.dev'
+  title: "EduPlay - Interactive Learning Platform for Kids",
+  description:
+    "A fun and interactive learning platform for kids to explore various subjects through games and quizzes.",
 }
 
 export default function RootLayout({
@@ -23,12 +22,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <AuthProvider>
             <div className="flex min-h-screen flex-col">
               <Navbar />
-              <main className="flex-1 pt-16">{children}</main>
-              <Footer />
+              <main className="flex-1">{children}</main>
             </div>
           </AuthProvider>
         </ThemeProvider>
@@ -37,6 +35,3 @@ export default function RootLayout({
   )
 }
 
-
-
-import './globals.css'

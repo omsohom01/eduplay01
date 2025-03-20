@@ -9,12 +9,13 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Loader2, UserIcon, Mail, Calendar, LogOut } from "lucide-react"
+import { Loader2, UserIcon, Mail, Calendar, LogOut, Cake } from "lucide-react"
 import { getUserData, updateUserProfile } from "@/lib/user-service"
 
 export default function ProfilePage() {
   const { user, loading, logout } = useAuth()
   const [displayName, setDisplayName] = useState("")
+  const [age, setAge] = useState<string>("")
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -31,6 +32,7 @@ export default function ProfilePage() {
         const data = await getUserData(user.id)
         if (data) {
           setUserData(data)
+          setAge(data.age?.toString() || "")
         }
       }
 
@@ -47,7 +49,7 @@ export default function ProfilePage() {
 
     try {
       // Update profile via API
-      await updateUserProfile(displayName)
+      await updateUserProfile(displayName, age ? Number.parseInt(age) : undefined)
 
       setSuccess("Profile updated successfully")
       setIsEditing(false)
@@ -133,6 +135,26 @@ export default function ProfilePage() {
                       <Input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
                     ) : (
                       <p className="text-lg font-medium">{user.name || "Not set"}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Cake className="h-4 w-4 text-muted-foreground" />
+                      <Label htmlFor="age">Age</Label>
+                    </div>
+                    {isEditing ? (
+                      <Input
+                        id="age"
+                        type="number"
+                        min="1"
+                        max="120"
+                        value={age}
+                        onChange={(e) => setAge(e.target.value)}
+                        placeholder="Enter your age"
+                      />
+                    ) : (
+                      <p className="text-lg">{userData?.age || "Not set"}</p>
                     )}
                   </div>
 
@@ -224,3 +246,4 @@ export default function ProfilePage() {
     </div>
   )
 }
+

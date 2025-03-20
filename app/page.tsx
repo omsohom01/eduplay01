@@ -1,6 +1,15 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Calculator, FlaskRoundIcon as Flask, BookOpen, Code, Trophy, Video, Gamepad2 } from "lucide-react"
+import {
+  Calculator,
+  FlaskRoundIcon as Flask,
+  BookOpen,
+  Code,
+  Trophy,
+  Video,
+  Gamepad2,
+  MessageSquare,
+} from "lucide-react"
 
 export default function Home() {
   return (
@@ -124,7 +133,7 @@ export default function Home() {
       </section>
 
       {/* Video Search Section */}
-      <section className="py-20">
+      <section className="py-20 bg-secondary/20">
         <div className="container">
           <div className="flex flex-col md:flex-row gap-12 items-center">
             <div className="md:w-1/2">
@@ -133,7 +142,7 @@ export default function Home() {
                 Use our AI-powered video search to find the best educational videos for any topic. Perfect for visual
                 learners!
               </p>
-              <div className="bg-secondary/30 p-6 rounded-xl mb-6">
+              <div className="bg-card p-6 rounded-xl mb-6 shadow-sm border border-border">
                 <p className="italic text-muted-foreground">
                   "The video search feature helped my child find exactly what they needed to understand fractions
                   better!"
@@ -141,20 +150,73 @@ export default function Home() {
                 <p className="font-medium mt-2">— Parent of 8-year-old</p>
               </div>
               <Link href="/video-search">
-                <Button className="flex items-center gap-2">
-                  <Video className="h-4 w-4" />
+                <Button size="lg" className="flex items-center gap-2 w-full sm:w-auto">
+                  <Video className="h-5 w-5" />
                   Try Video Search
                 </Button>
               </Link>
             </div>
             <div className="md:w-1/2">
-              <div className="relative rounded-xl overflow-hidden shadow-lg">
-                <div className="aspect-video bg-secondary/50 flex items-center justify-center">
-                  <Video className="h-16 w-16 text-muted-foreground/50" />
+              <div className="relative rounded-xl overflow-hidden shadow-lg border border-border">
+                <div className="aspect-video bg-card flex items-center justify-center relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-purple-500/10 opacity-50"></div>
+                  <div className="relative z-10 p-6 text-center">
+                    <Video className="h-16 w-16 text-primary mx-auto mb-4" />
+                    <h3 className="text-xl font-bold mb-2">Educational Videos</h3>
+                    <p className="text-muted-foreground max-w-xs mx-auto">
+                      Find age-appropriate videos on any subject with our AI-powered search
+                    </p>
+                  </div>
                 </div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="bg-primary/90 text-primary-foreground px-4 py-2 rounded-full font-medium">
+                <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center">
+                  <div className="bg-primary/90 text-primary-foreground px-4 py-2 rounded-full font-medium shadow-lg">
                     Kid-friendly videos
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Chatbot Section */}
+      <section className="py-20 bg-primary/5">
+        <div className="container">
+          <div className="flex flex-col md:flex-row gap-12 items-center">
+            <div className="md:w-1/2">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Ask Our AI Assistant</h2>
+              <p className="text-xl text-muted-foreground mb-6">
+                Have questions about any subject? Our AI chatbot is here to help you learn and understand concepts
+                better.
+              </p>
+              <div className="bg-card p-6 rounded-xl mb-6 shadow-sm border border-border">
+                <p className="italic text-muted-foreground">
+                  "The chatbot helped me understand fractions when I was stuck on my homework!"
+                </p>
+                <p className="font-medium mt-2">— Student, age 10</p>
+              </div>
+              <Link href="/chatbot">
+                <Button size="lg" className="flex items-center gap-2 w-full sm:w-auto">
+                  <MessageSquare className="h-5 w-5" />
+                  Chat with AI
+                </Button>
+              </Link>
+            </div>
+            <div className="md:w-1/2">
+              <div className="relative rounded-xl overflow-hidden shadow-lg border border-border">
+                <div className="aspect-video bg-card flex items-center justify-center relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-purple-500/10 opacity-50"></div>
+                  <div className="relative z-10 p-6 text-center">
+                    <MessageSquare className="h-16 w-16 text-primary mx-auto mb-4" />
+                    <h3 className="text-xl font-bold mb-2">AI Learning Assistant</h3>
+                    <p className="text-muted-foreground max-w-xs mx-auto">
+                      Get help with homework, learn new concepts, or explore any educational topic
+                    </p>
+                  </div>
+                </div>
+                <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center">
+                  <div className="bg-primary/90 text-primary-foreground px-4 py-2 rounded-full font-medium shadow-lg">
+                    Available 24/7
                   </div>
                 </div>
               </div>
@@ -185,3 +247,4 @@ export default function Home() {
     </main>
   )
 }
+
