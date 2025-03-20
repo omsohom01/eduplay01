@@ -1,504 +1,519 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { useRouter, useSearchParams } from "next/navigation"
+import Link from "next/link"
+import { ArrowLeft, Brain, RefreshCw, Award, CheckCircle, XCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useAuth } from "@/contexts/auth-context"
-import { Brain } from "@/components/ui/brain"
 import { Progress } from "@/components/ui/progress"
-import { Clock, AlertCircle } from "lucide-react"
+import { GoogleGenerativeAI } from "@google/generative-ai"
+
+// Initialize the Gemini API
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "AIzaSyDiaCC3dAZS8ZiDU1uF8YfEu9PoWy8YLoA"
+const genAI = new GoogleGenerativeAI(GEMINI_API_KEY)
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
 
 interface Question {
   question: string
   options: string[]
-  correctAnswer: string
+  correctAnswer: number
   explanation: string
-  topic: string
-  timeLimit: number
+  id: string
+  difficulty: string
 }
 
-interface TopicPerformance {
-  topic: string
-  correct: number
-  total: number
-  averageTimeRatio: number // Time taken / expected time
+interface SubjectInfo {
+  name: string
+  color: string
+  icon: JSX.Element
+  slug: string
 }
 
-const subjects = [
-  { id: "math", name: "Mathematics", topics: ["Algebra", "Geometry", "Calculus", "Statistics", "Number Theory"] },
-  { id: "science", name: "Science", topics: ["Physics", "Chemistry", "Biology", "Earth Science", "Astronomy"] },
-  {
-    id: "english",
-    name: "English",
-    topics: ["Grammar", "Vocabulary", "Reading Comprehension", "Writing", "Literature"],
+const subjects: Record<string, SubjectInfo> = {
+  math: {
+    name: "Mathematics",
+    color: "bg-math text-white",
+    icon: <span className="text-2xl">🔢</span>,
+    slug: "math",
   },
-  {
-    id: "history",
-    name: "History",
-    topics: ["Ancient History", "Medieval History", "Modern History", "World Wars", "Cultural History"],
+  science: {
+    name: "Science",
+    color: "bg-science text-white",
+    icon: <span className="text-2xl">🔬</span>,
+    slug: "science",
   },
-  {
-    id: "geography",
+  reading: {
+    name: "Reading",
+    color: "bg-reading text-white",
+    icon: <span className="text-2xl">📚</span>,
+    slug: "reading",
+  },
+  coding: {
+    name: "Coding",
+    color: "bg-coding text-white",
+    icon: <span className="text-2xl">💻</span>,
+    slug: "coding",
+  },
+  art: {
+    name: "Art",
+    color: "bg-art text-white",
+    icon: <span className="text-2xl">🎨</span>,
+    slug: "art",
+  },
+  music: {
+    name: "Music",
+    color: "bg-music text-white",
+    icon: <span className="text-2xl">🎵</span>,
+    slug: "music",
+  },
+  geography: {
     name: "Geography",
-    topics: ["Physical Geography", "Human Geography", "Cartography", "Climate", "Ecosystems"],
+    color: "bg-geography text-white",
+    icon: <span className="text-2xl">🌍</span>,
+    slug: "geography",
   },
-]
+  logic: {
+    name: "Logic",
+    color: "bg-logic text-white",
+    icon: <span className="text-2xl">🧩</span>,
+    slug: "logic",
+  },
+}
 
 export default function TestYourLevelPage() {
-  const { user } = useAuth()
   const router = useRouter()
-  const [selectedSubject, setSelectedSubject] = useState<string | null>(null)
+  const searchParams = useSearchParams()
+  const initialSubject = searchParams.get("subject") || ""
+
+  const [selectedSubject, setSelectedSubject] = useState<string>(initialSubject)
   const [questions, setQuestions] = useState<Question[]>([])
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
-  const [selectedOption, setSelectedOption] = useState<string | null>(null)
-  const [isAnswered, setIsAnswered] = useState(false)
+  const [selectedOption, setSelectedOption] = useState<number | null>(null)
+  const [isAnswerChecked, setIsAnswerChecked] = useState(false)
   const [score, setScore] = useState(0)
-  const [loading, setLoading] = useState(false)
   const [testCompleted, setTestCompleted] = useState(false)
-  const [timeLeft, setTimeLeft] = useState<number | null>(null)
-  const [topicPerformance, setTopicPerformance] = useState<TopicPerformance[]>([])
-  const [questionStartTime, setQuestionStartTime] = useState<number>(0)
-  const [timeSpent, setTimeSpent] = useState<Record<number, number>>({})
+  const [loading, setLoading] = useState(false)
+  const [recommendedLevel, setRecommendedLevel] = useState<string>("")
+  const [error, setError] = useState<string | null>(null)
+  const [showExplanation, setShowExplanation] = useState(false)
 
-  useEffect(() => {
-    if (!user) {
-      router.push("/signin")
-    }
-  }, [user, router])
+  const currentQuestion = questions[currentQuestionIndex]
+  const progress = questions.length > 0 ? ((currentQuestionIndex + 1) / questions.length) * 100 : 0
 
-  useEffect(() => {
-    if (timeLeft !== null && timeLeft > 0) {
-      const timer = setTimeout(() => {
-        setTimeLeft(timeLeft - 1)
-      }, 1000)
-      return () => clearTimeout(timer)
-    } else if (timeLeft === 0 && !isAnswered) {
-      handleAnswer(null) // Auto-submit when time runs out
-    }
-  }, [timeLeft, isAnswered])
-
-  const fetchQuestions = async (subject: string) => {
+  // Function to generate adaptive test questions
+  const generateAdaptiveQuestions = async (subject: string) => {
     setLoading(true)
+    setError(null)
+
     try {
-      // Get topics for the selected subject
-      const subjectData = subjects.find((s) => s.id === subject)
-      if (!subjectData) throw new Error("Subject not found")
-
-      const allQuestions: Question[] = []
-
-      // Generate questions for each topic
-      for (const topic of subjectData.topics) {
-        const response = await fetch("/api/gemini/questions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            subject,
-            topic,
-            difficulty: "medium",
-            count: 2, // 2 questions per topic = 10 total questions
-          }),
-        })
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch questions")
+      const prompt = `Generate 10 quiz questions to test a student's knowledge level in ${subjects[subject]?.name || subject}.
+      
+      Create questions with varying difficulty levels:
+      - 2 VERY EASY questions (basic knowledge)
+      - 2 EASY questions (elementary knowledge)
+      - 2 INTERMEDIATE questions (average knowledge)
+      - 2 ADVANCED questions (above average knowledge)
+      - 2 EXPERT questions (expert knowledge)
+      
+      Each question must have:
+      - A clear question text
+      - Four answer choices
+      - The index of the correct answer (0-3)
+      - A brief explanation
+      - The difficulty level explicitly marked
+      
+      Return ONLY valid JSON formatted like this:
+      [
+        {
+          "question": "What is 2 + 2?",
+          "options": ["3", "4", "5", "6"],
+          "correctAnswer": 1,
+          "explanation": "2 + 2 equals 4.",
+          "difficulty": "very easy"
         }
+      ]`
 
-        const data = await response.json()
+      const result = await model.generateContent(prompt)
+      let responseText = result.response.text()
 
-        // Add topic and time limit to each question
-        const questionsWithTopic = data.questions.map((q: any) => ({
-          ...q,
-          topic,
-          timeLimit: calculateTimeLimit(q),
-        }))
+      // Fix: Remove unnecessary formatting
+      responseText = responseText.replace(/```json|```/g, "").trim()
 
-        allQuestions.push(...questionsWithTopic)
+      // Parse the JSON
+      const parsedQuestions: Question[] = JSON.parse(responseText)
+
+      // Add unique IDs
+      const questionsWithIds = parsedQuestions.map((q, index) => ({
+        ...q,
+        id: `level-test-${subject}-${Date.now()}-${index}`,
+      }))
+
+      if (!questionsWithIds || questionsWithIds.length === 0) {
+        throw new Error("Failed to generate questions")
       }
 
-      // Shuffle the questions
-      const shuffledQuestions = allQuestions.sort(() => Math.random() - 0.5)
+      // Shuffle the questions to mix difficulty levels
+      const shuffledQuestions = [...questionsWithIds].sort(() => Math.random() - 0.5)
 
       setQuestions(shuffledQuestions)
       setCurrentQuestionIndex(0)
-      setScore(0)
-      setIsAnswered(false)
       setSelectedOption(null)
+      setIsAnswerChecked(false)
+      setScore(0)
       setTestCompleted(false)
-      setTopicPerformance([])
-      setTimeSpent({})
-
-      // Set the time limit for the first question
-      if (shuffledQuestions.length > 0) {
-        setTimeLeft(shuffledQuestions[0].timeLimit)
-        setQuestionStartTime(Date.now())
-      }
-    } catch (error) {
-      console.error("Error fetching questions:", error)
+      setShowExplanation(false)
+    } catch (err) {
+      console.error("Error generating adaptive questions:", err)
+      setError("Failed to generate questions. Please try again.")
     } finally {
       setLoading(false)
     }
   }
 
-  const calculateTimeLimit = (question: any): number => {
-    // Base time in seconds
-    let baseTime = 30
+  // Start the test when a subject is selected
+  useEffect(() => {
+    if (selectedSubject && subjects[selectedSubject]) {
+      generateAdaptiveQuestions(selectedSubject)
+    }
+  }, [selectedSubject])
 
-    // Adjust based on question length
-    const questionLength = question.question.length
-    if (questionLength > 200) baseTime += 15
-    else if (questionLength > 100) baseTime += 10
-
-    // Adjust based on options complexity
-    const optionsComplexity =
-      question.options.reduce((acc: number, opt: string) => acc + opt.length, 0) / question.options.length
-    if (optionsComplexity > 50) baseTime += 10
-    else if (optionsComplexity > 25) baseTime += 5
-
-    return baseTime
+  const handleOptionSelect = (index: number) => {
+    if (!isAnswerChecked) {
+      setSelectedOption(index)
+    }
   }
 
-  const handleSubjectSelect = (subject: string) => {
-    setSelectedSubject(subject)
-    fetchQuestions(subject)
-  }
+  const checkAnswer = () => {
+    if (selectedOption === null) return
 
-  const handleAnswer = (option: string | null) => {
-    if (isAnswered) return
+    setIsAnswerChecked(true)
+    setShowExplanation(true)
 
-    // Calculate time spent on this question
-    const timeSpentOnQuestion = Date.now() - questionStartTime
-    setTimeSpent((prev) => ({
-      ...prev,
-      [currentQuestionIndex]: timeSpentOnQuestion / 1000, // Convert to seconds
-    }))
-
-    setSelectedOption(option)
-    setIsAnswered(true)
-
-    const currentQuestion = questions[currentQuestionIndex]
-    const isCorrect = option === currentQuestion.correctAnswer
-
-    if (isCorrect) {
+    if (selectedOption === currentQuestion.correctAnswer) {
       setScore(score + 1)
     }
-
-    // Update topic performance
-    updateTopicPerformance(currentQuestion.topic, isCorrect, timeSpentOnQuestion / 1000, currentQuestion.timeLimit)
   }
 
-  const updateTopicPerformance = (topic: string, isCorrect: boolean, timeSpent: number, timeLimit: number) => {
-    setTopicPerformance((prev) => {
-      const existingTopic = prev.find((t) => t.topic === topic)
-
-      if (existingTopic) {
-        return prev.map((t) => {
-          if (t.topic === topic) {
-            return {
-              ...t,
-              correct: isCorrect ? t.correct + 1 : t.correct,
-              total: t.total + 1,
-              averageTimeRatio: (t.averageTimeRatio * t.total + timeSpent / timeLimit) / (t.total + 1),
-            }
-          }
-          return t
-        })
-      } else {
-        return [
-          ...prev,
-          {
-            topic,
-            correct: isCorrect ? 1 : 0,
-            total: 1,
-            averageTimeRatio: timeSpent / timeLimit,
-          },
-        ]
-      }
-    })
-  }
-
-  const handleNextQuestion = () => {
+  const nextQuestion = () => {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1)
       setSelectedOption(null)
-      setIsAnswered(false)
-      setTimeLeft(questions[currentQuestionIndex + 1].timeLimit)
-      setQuestionStartTime(Date.now())
+      setIsAnswerChecked(false)
+      setShowExplanation(false)
     } else {
-      setTestCompleted(true)
-
-      // Log the activity
-      if (user) {
-        fetch("/api/user/activity", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            userId: user.id,
-            activityType: "assessment",
-            details: {
-              subject: selectedSubject,
-              score: `${score}/${questions.length}`,
-              topicPerformance,
-            },
-          }),
-        }).catch((err) => console.error("Error logging activity:", err))
-      }
+      completeTest()
     }
   }
 
-  const getTopicRecommendations = () => {
-    return topicPerformance
-      .sort((a, b) => a.correct / a.total - b.correct / b.total)
-      .map((topic) => {
-        const performancePercentage = (topic.correct / topic.total) * 100
-        let recommendedDifficulty = "medium"
-        let improvementNeeded = false
+  const completeTest = () => {
+    setTestCompleted(true)
 
-        if (performancePercentage < 40) {
-          recommendedDifficulty = "easy"
-          improvementNeeded = true
-        } else if (performancePercentage > 80) {
-          recommendedDifficulty = "hard"
-          improvementNeeded = false
-        } else {
-          improvementNeeded = performancePercentage < 60
-        }
+    // Determine recommended level based on score
+    const finalScore = score + (selectedOption === currentQuestion.correctAnswer ? 1 : 0)
+    const percentage = (finalScore / questions.length) * 100
 
-        const timeManagement =
-          topic.averageTimeRatio > 1.2
-            ? "You took longer than expected on these questions. Try to improve your speed."
-            : topic.averageTimeRatio < 0.8
-              ? "You answered quickly! Make sure you're not rushing through questions."
-              : "Your timing was good on these questions."
-
-        return {
-          topic: topic.topic,
-          performance: `${topic.correct}/${topic.total} correct (${performancePercentage.toFixed(0)}%)`,
-          recommendedDifficulty,
-          improvementNeeded,
-          timeManagement,
-        }
-      })
+    if (percentage < 30) {
+      setRecommendedLevel("easy")
+    } else if (percentage < 50) {
+      setRecommendedLevel("beginner")
+    } else if (percentage < 75) {
+      setRecommendedLevel("intermediate")
+    } else {
+      setRecommendedLevel("hard")
+    }
   }
 
-  const restartTest = () => {
-    setSelectedSubject(null)
-    setQuestions([])
-    setCurrentQuestionIndex(0)
-    setSelectedOption(null)
-    setIsAnswered(false)
-    setScore(0)
-    setTestCompleted(false)
-    setTopicPerformance([])
-    setTimeSpent({})
-    setTimeLeft(null)
+  // If no subject is selected, show subject selection
+  if (!selectedSubject || !subjects[selectedSubject]) {
+    return (
+      <div className="container py-12 md:py-20">
+        <div className="mb-8">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground mb-4"
+          >
+            <ArrowLeft className="mr-1 h-4 w-4" />
+            Back to Dashboard
+          </Link>
+
+          <div className="relative overflow-hidden rounded-xl bg-secondary/30 border border-secondary p-8 mb-12">
+            <div className="absolute inset-0 pattern-dots opacity-10"></div>
+            <div className="relative z-10">
+              <h1 className="text-3xl md:text-4xl font-bold mb-4 gradient-text from-primary via-purple-500 to-pink-500">
+                Test Your Knowledge Level
+              </h1>
+              <p className="text-lg text-muted-foreground max-w-3xl">
+                Take a quick assessment to determine which difficulty level is right for you. Select a subject to begin.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {Object.entries(subjects).map(([slug, subject]) => (
+              <button
+                key={slug}
+                onClick={() => setSelectedSubject(slug)}
+                className="p-6 rounded-xl bg-secondary/30 border border-secondary hover:bg-secondary/50 transition-all duration-300 text-left"
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`w-10 h-10 rounded-full ${subject.color} flex items-center justify-center`}>
+                    {subject.icon}
+                  </div>
+                  <h3 className="text-xl font-bold">{subject.name}</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Test your knowledge in {subject.name.toLowerCase()} and find the right difficulty level.
+                </p>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
   }
 
-  if (!user) {
-    return <div className="flex justify-center items-center min-h-screen">Loading...</div>
-  }
-
+  // Show loading state
   if (loading) {
     return (
-      <div className="container mx-auto py-8 px-4">
-        <Card className="w-full max-w-4xl mx-auto">
-          <CardContent className="flex flex-col items-center justify-center py-10">
-            <Brain className="animate-pulse" />
-            <p className="mt-4 text-lg">Generating your assessment questions...</p>
-          </CardContent>
-        </Card>
+      <div className="container py-12 flex items-center justify-center min-h-[60vh]">
+        <div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+        <span className="ml-3 text-muted-foreground">Generating assessment questions...</span>
       </div>
     )
   }
 
+  // Show error state
+  if (error) {
+    return (
+      <div className="container py-12 flex flex-col items-center justify-center min-h-[60vh]">
+        <div className="text-red-500 mb-4">⚠️ {error}</div>
+        <Button
+          onClick={() => generateAdaptiveQuestions(selectedSubject)}
+          className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
+        >
+          Try Again
+        </Button>
+      </div>
+    )
+  }
+
+  // If test is completed, show results
   if (testCompleted) {
-    const recommendations = getTopicRecommendations()
-    const overallScore = (score / questions.length) * 100
+    const finalScore = score + (selectedOption === currentQuestion?.correctAnswer ? 1 : 0)
+    const subjectInfo = subjects[selectedSubject]
+    const percentage = Math.round((finalScore / questions.length) * 100)
 
     return (
-      <div className="container mx-auto py-8 px-4">
-        <Card className="w-full max-w-4xl mx-auto">
-          <CardHeader>
-            <CardTitle className="text-2xl">Assessment Results</CardTitle>
-            <CardDescription>
-              You scored {score} out of {questions.length} ({overallScore.toFixed(0)}%)
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <h3 className="text-lg font-semibold">Overall Performance</h3>
-              <Progress value={overallScore} className="h-2" />
+      <div className="container py-12 md:py-20">
+        <div className="mb-8">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground mb-4"
+          >
+            <ArrowLeft className="mr-1 h-4 w-4" />
+            Back to Dashboard
+          </Link>
+
+          <div className="p-8 rounded-xl bg-secondary/30 border border-secondary text-center">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+              <Award className="h-8 w-8 text-primary" />
             </div>
+            <h2 className="text-2xl font-bold mb-2">Assessment Completed!</h2>
+            <p className="text-muted-foreground mb-6">
+              You scored {finalScore} out of {questions.length} ({percentage}%)
+            </p>
 
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Topic Breakdown & Recommendations</h3>
-
-              {recommendations.map((rec, index) => (
-                <Card
-                  key={index}
-                  className={`border ${rec.improvementNeeded ? "border-orange-300 dark:border-orange-700" : "border-green-300 dark:border-green-700"}`}
-                >
-                  <CardContent className="p-4 space-y-2">
-                    <div className="flex justify-between items-center">
-                      <h4 className="font-medium">{rec.topic}</h4>
-                      <span
-                        className={`px-2 py-1 rounded text-sm ${
-                          rec.improvementNeeded
-                            ? "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-100"
-                            : "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
-                        }`}
-                      >
-                        {rec.performance}
-                      </span>
-                    </div>
-
-                    <div className="text-sm space-y-1">
-                      <p>
-                        <span className="font-medium">Recommended difficulty:</span> {rec.recommendedDifficulty}
-                      </p>
-                      <p>
-                        <span className="font-medium">Time management:</span> {rec.timeManagement}
-                      </p>
-                      {rec.improvementNeeded && (
-                        <p className="flex items-center gap-1 text-orange-600 dark:text-orange-400">
-                          <AlertCircle className="h-4 w-4" />
-                          This topic needs improvement
-                        </p>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button onClick={restartTest} className="w-full">
-              Start a New Assessment
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-    )
-  }
-
-  if (!selectedSubject) {
-    return (
-      <div className="container mx-auto py-8 px-4">
-        <Card className="w-full max-w-4xl mx-auto">
-          <CardHeader>
-            <CardTitle className="text-2xl">Test Your Knowledge Level</CardTitle>
-            <CardDescription>
-              Select a subject to begin your assessment. We'll test your knowledge across different topics and provide
-              personalized recommendations.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {subjects.map((subject) => (
-              <Button
-                key={subject.id}
-                variant="outline"
-                className="h-24 flex flex-col items-center justify-center text-center p-4 hover:bg-primary hover:text-primary-foreground transition-colors"
-                onClick={() => handleSubjectSelect(subject.id)}
-              >
-                <span className="text-lg font-medium">{subject.name}</span>
-                <span className="text-xs mt-1">{subject.topics.length} topics</span>
-              </Button>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
-  const currentQuestion = questions[currentQuestionIndex]
-  const progressPercentage = (currentQuestionIndex / questions.length) * 100
-  const timePercentage = timeLeft !== null ? (timeLeft / currentQuestion.timeLimit) * 100 : 0
-  const isTimeRunningLow = timeLeft !== null && timeLeft <= 10
-
-  return (
-    <div className="container mx-auto py-8 px-4">
-      <Card className="w-full max-w-4xl mx-auto">
-        <CardHeader className="relative">
-          <div className="flex justify-between items-center">
-            <CardTitle className="text-xl">
-              Question {currentQuestionIndex + 1} of {questions.length}
-            </CardTitle>
-            <div className="flex items-center gap-2">
-              <Clock className={`h-5 w-5 ${isTimeRunningLow ? "text-red-500 animate-pulse" : ""}`} />
-              <span className={`${isTimeRunningLow ? "text-red-500 font-bold" : ""}`}>{timeLeft}s</span>
-            </div>
-          </div>
-          <Progress value={progressPercentage} className="h-1 mt-2" />
-          <Progress
-            value={timePercentage}
-            className={`h-1 mt-1 ${isTimeRunningLow ? "bg-red-100 dark:bg-red-900" : "bg-blue-100 dark:bg-blue-900"}`}
-            indicatorClassName={isTimeRunningLow ? "bg-red-500" : "bg-blue-500"}
-          />
-          <div className="text-xs mt-1 text-muted-foreground">Topic: {currentQuestion.topic}</div>
-        </CardHeader>
-        <CardContent className="pt-4 pb-6">
-          <div className="space-y-6">
-            <div className="text-lg font-medium">{currentQuestion.question}</div>
-            <div className="space-y-3">
-              {currentQuestion.options.map((option, index) => (
-                <Button
-                  key={index}
-                  variant={
-                    isAnswered
-                      ? option === currentQuestion.correctAnswer
-                        ? "default"
-                        : option === selectedOption
-                          ? "destructive"
-                          : "outline"
-                      : selectedOption === option
-                        ? "default"
-                        : "outline"
-                  }
-                  className="w-full justify-start text-left p-4 h-auto"
-                  onClick={() => !isAnswered && handleAnswer(option)}
-                  disabled={isAnswered}
-                >
-                  {option}
-                </Button>
-              ))}
-            </div>
-            {isAnswered && (
-              <div
-                className={`p-4 rounded-lg ${
-                  selectedOption === currentQuestion.correctAnswer
-                    ? "bg-green-50 text-green-800 dark:bg-green-900 dark:text-green-100"
-                    : "bg-red-50 text-red-800 dark:bg-red-900 dark:text-red-100"
-                }`}
-              >
-                <p className="font-medium">
-                  {selectedOption === currentQuestion.correctAnswer
-                    ? "Correct!"
-                    : selectedOption === null
-                      ? "Time's up!"
-                      : "Incorrect!"}
-                </p>
-                <p className="mt-1">{currentQuestion.explanation}</p>
+            <div className="w-full max-w-xs mx-auto mb-6">
+              <div className="relative h-4 rounded-full bg-secondary overflow-hidden">
+                <div
+                  className={`absolute left-0 top-0 bottom-0 ${subjectInfo.color.split(" ")[0]}`}
+                  style={{ width: `${(finalScore / questions.length) * 100}%` }}
+                ></div>
               </div>
-            )}
+            </div>
+
+            <div className="p-6 rounded-xl bg-primary/10 border border-primary/30 mb-8 max-w-md mx-auto">
+              <h3 className="text-xl font-bold mb-2">Recommended Level</h3>
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <span
+                  className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    recommendedLevel === "easy"
+                      ? "bg-green-500"
+                      : recommendedLevel === "beginner"
+                        ? "bg-blue-500"
+                        : recommendedLevel === "intermediate"
+                          ? "bg-orange-500"
+                          : "bg-red-500"
+                  } text-white`}
+                >
+                  {recommendedLevel.charAt(0).toUpperCase() + recommendedLevel.slice(1)}
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Based on your performance, we recommend you start with <strong>{recommendedLevel}</strong> difficulty in{" "}
+                {subjectInfo.name}.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setCurrentQuestionIndex(0)
+                  setSelectedOption(null)
+                  setIsAnswerChecked(false)
+                  setScore(0)
+                  setTestCompleted(false)
+                  generateAdaptiveQuestions(selectedSubject)
+                }}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Retake Test
+              </Button>
+
+              <Button
+                className={`${subjectInfo.color.split(" ")[0]} text-white`}
+                onClick={() => {
+                  router.push(`/subjects/${selectedSubject}?difficulty=${recommendedLevel}`)
+                }}
+              >
+                Start Learning at {recommendedLevel.charAt(0).toUpperCase() + recommendedLevel.slice(1)} Level
+              </Button>
+            </div>
           </div>
-        </CardContent>
-        <CardFooter>
-          {isAnswered ? (
-            <Button onClick={handleNextQuestion} className="w-full">
-              {currentQuestionIndex < questions.length - 1 ? "Next Question" : "See Results"}
-            </Button>
-          ) : (
-            <Button onClick={() => handleAnswer(null)} variant="outline" className="w-full">
-              Skip Question
-            </Button>
-          )}
-        </CardFooter>
-      </Card>
+        </div>
+      </div>
+    )
+  }
+
+  // Show the test questions
+  return (
+    <div className="container py-12 md:py-20">
+      <div className="mb-8">
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground mb-4"
+        >
+          <ArrowLeft className="mr-1 h-4 w-4" />
+          Back to Dashboard
+        </Link>
+
+        <div className="relative overflow-hidden rounded-xl bg-secondary/30 border border-secondary p-8 mb-12">
+          <div className="absolute inset-0 pattern-dots opacity-10"></div>
+          <div className="relative z-10">
+            <div className="flex items-center gap-2 mb-2">
+              <div className={`px-2 py-0.5 rounded-full text-xs font-medium ${subjects[selectedSubject].color}`}>
+                {subjects[selectedSubject].name}
+              </div>
+              <div className="text-xs text-muted-foreground">Knowledge Assessment</div>
+            </div>
+            <h1 className="text-3xl md:text-4xl font-bold mb-4">Test Your Level</h1>
+            <p className="text-lg text-muted-foreground max-w-3xl">
+              Answer these questions to help us determine the right difficulty level for you.
+            </p>
+          </div>
+        </div>
+
+        {currentQuestion && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <div className="text-sm font-medium text-muted-foreground">
+                Question {currentQuestionIndex + 1} of {questions.length}
+              </div>
+              <div className="text-sm font-medium">
+                Score: {score}/{currentQuestionIndex + (isAnswerChecked ? 1 : 0)}
+              </div>
+            </div>
+
+            <Progress value={progress} className="h-1.5 bg-secondary" />
+
+            <div className="p-6 rounded-xl bg-secondary/30 border border-secondary">
+              <h3 className="text-xl font-bold mb-6">{currentQuestion.question}</h3>
+
+              <div className="space-y-3">
+                {currentQuestion.options.map((option, index) => (
+                  <div
+                    key={index}
+                    className={`answer-option p-4 rounded-lg cursor-pointer relative z-10 ${
+                      selectedOption === index ? "selected" : ""
+                    } ${isAnswerChecked && index === currentQuestion.correctAnswer ? "correct" : ""} ${
+                      isAnswerChecked && selectedOption === index && selectedOption !== currentQuestion.correctAnswer
+                        ? "incorrect"
+                        : ""
+                    }`}
+                    onClick={() => handleOptionSelect(index)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div
+                          className={`w-6 h-6 rounded-full flex items-center justify-center mr-3 ${
+                            selectedOption === index
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-secondary text-muted-foreground"
+                          } ${
+                            isAnswerChecked && index === currentQuestion.correctAnswer ? "bg-green-500 text-white" : ""
+                          } ${
+                            isAnswerChecked &&
+                            selectedOption === index &&
+                            selectedOption !== currentQuestion.correctAnswer
+                              ? "bg-red-500 text-white"
+                              : ""
+                          }`}
+                        >
+                          {String.fromCharCode(65 + index)}
+                        </div>
+                        <span className="text-md">{option}</span>
+                      </div>
+
+                      {isAnswerChecked && index === currentQuestion.correctAnswer && (
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                      )}
+                      {isAnswerChecked &&
+                        selectedOption === index &&
+                        selectedOption !== currentQuestion.correctAnswer && (
+                          <XCircle className="h-5 w-5 text-red-500" />
+                        )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {showExplanation && currentQuestion.explanation && (
+                <div
+                  className={`mt-6 p-4 rounded-lg ${
+                    isAnswerChecked && selectedOption === currentQuestion.correctAnswer
+                      ? "bg-green-500/10 border border-green-500/30"
+                      : "bg-red-500/10 border border-red-500/30"
+                  }`}
+                >
+                  <div className="flex items-start gap-2">
+                    <Brain className="h-5 w-5 text-primary mt-0.5" />
+                    <div>
+                      <p className="font-medium text-primary">Explanation</p>
+                      <p className="text-sm text-muted-foreground mt-1">{currentQuestion.explanation}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end">
+              <Button
+                onClick={isAnswerChecked ? nextQuestion : checkAnswer}
+                disabled={selectedOption === null}
+                className={`${subjects[selectedSubject].color.split(" ")[0]} text-white`}
+              >
+                {isAnswerChecked
+                  ? currentQuestionIndex < questions.length - 1
+                    ? "Next Question"
+                    : "Complete Assessment"
+                  : "Check Answer"}
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
-
