@@ -7,7 +7,7 @@ import { ArrowLeft, Clock, BookOpen, Brain, CheckCircle, XCircle } from "lucide-
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { GoogleGenerativeAI } from "@google/generative-ai"
-import { getTopicLearningHistory, updateLearningHistory } from "@/lib/learning-history-service"
+import { getTopicLearningHistory, updateLearningHistory } from "@/lib/learning-history"
 import { logActivity } from "@/lib/user-service"
 import type { JSX } from "react/jsx-runtime"
 
