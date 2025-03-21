@@ -10,8 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { GoogleGenerativeAI } from "@google/generative-ai"
 
 // Initialize the Gemini API
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || ""
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY)
+const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || "")
 const model = genAI.getGenerativeModel({ model: "gemini-pro" })
 
 interface Question {
@@ -177,13 +176,15 @@ export default function TestYourLevelPage() {
         ]`
 
         const result = await model.generateContent(prompt)
-        let responseText = result.response.text()
+        const responseText = result.response.text()
 
-        // Fix: Remove unnecessary formatting
-        responseText = responseText.replace(/```json|```/g, "").trim()
+        // Extract JSON from the response
+        // This regex finds content between \`\`\`json and \`\`\` or just the entire content if no code blocks
+        const jsonMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)```/) || [null, responseText]
+        const jsonContent = jsonMatch[1].trim()
 
         // Parse the JSON
-        const parsedQuestions: Question[] = JSON.parse(responseText)
+        const parsedQuestions: Question[] = JSON.parse(jsonContent)
 
         // Add unique IDs
         const questionsWithIds = parsedQuestions.map((q, index) => ({
