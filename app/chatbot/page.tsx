@@ -53,6 +53,7 @@ export default function ChatbotPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer AIzaSyDiaCC3dAZS8ZiDU1uF8YfEu9PoWy8YLoA`, // Add the Gemini API key here
         },
         body: JSON.stringify({
           messages: [...messages, userMessage],
@@ -64,7 +65,11 @@ export default function ChatbotPage() {
       }
 
       const data = await response.json()
-      setMessages((prev) => [...prev, data.message])
+      const assistantMessage: Message = {
+        role: "assistant",
+        content: data.message.content, // Ensure the response structure matches this
+      }
+      setMessages((prev) => [...prev, assistantMessage])
     } catch (error) {
       console.error("Error:", error)
       setMessages((prev) => [
@@ -152,4 +157,3 @@ export default function ChatbotPage() {
     </div>
   )
 }
-
