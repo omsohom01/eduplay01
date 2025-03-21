@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -27,6 +26,7 @@ export default function ChatbotPage() {
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
+  // Auto-scroll to the bottom when messages change
   useEffect(() => {
     scrollToBottom()
   }, [messages])
@@ -49,11 +49,12 @@ export default function ChatbotPage() {
     setIsLoading(true)
 
     try {
+      // Add the Gemini API key to the headers
       const response = await fetch("/api/gemini/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer AIzaSyDiaCC3dAZS8ZiDU1uF8YfEu9PoWy8YLoA`, // Add the Gemini API key here
+          "Authorization": `Bearer ${process.env.NEXT_PUBLIC_GEMINI_API_KEY}`, // Use environment variable
         },
         body: JSON.stringify({
           messages: [...messages, userMessage],
@@ -61,14 +62,18 @@ export default function ChatbotPage() {
       })
 
       if (!response.ok) {
-        throw new Error("Failed to get response")
+        throw new Error(`Failed to get response: ${response.statusText}`)
       }
 
       const data = await response.json()
+      console.log("API Response:", data) // Log the response for debugging
+
+      // Ensure the response structure matches the Gemini API
       const assistantMessage: Message = {
         role: "assistant",
-        content: data.message.content, // Ensure the response structure matches this
+        content: data.message.content, // Adjust based on the actual response structure
       }
+
       setMessages((prev) => [...prev, assistantMessage])
     } catch (error) {
       console.error("Error:", error)
@@ -76,7 +81,7 @@ export default function ChatbotPage() {
         ...prev,
         {
           role: "assistant",
-          content: "Sorry, I encountered an error. Please try again later.",
+          content: `Sorry, I encountered an error: ${error.message}. Please try again later.`,
         },
       ])
     } finally {
