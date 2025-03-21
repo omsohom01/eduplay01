@@ -49,16 +49,24 @@ export default function ChatbotPage() {
     setIsLoading(true)
 
     try {
-      // Add the Gemini API key to the headers
-      const response = await fetch("/api/gemini/chat", {
+      // Prepare the request body for the Gemini API
+      const requestBody = {
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: input }],
+          },
+        ],
+      }
+
+      // Fetch the Gemini API
+      const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.NEXT_PUBLIC_GEMINI_API_KEY}`, // Use environment variable
+          "x-goog-api-key": process.env.NEXT_PUBLIC_GEMINI_API_KEY, // Use environment variable
         },
-        body: JSON.stringify({
-          messages: [...messages, userMessage],
-        }),
+        body: JSON.stringify(requestBody),
       })
 
       if (!response.ok) {
@@ -68,10 +76,12 @@ export default function ChatbotPage() {
       const data = await response.json()
       console.log("API Response:", data) // Log the response for debugging
 
-      // Ensure the response structure matches the Gemini API
+      // Extract the assistant's response from the API response
+      const assistantResponse = data.candidates[0].content.parts[0].text
+
       const assistantMessage: Message = {
         role: "assistant",
-        content: data.message.content, // Adjust based on the actual response structure
+        content: assistantResponse,
       }
 
       setMessages((prev) => [...prev, assistantMessage])
