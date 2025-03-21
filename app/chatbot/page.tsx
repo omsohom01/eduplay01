@@ -1,5 +1,4 @@
 "use client"
-​
 import React from "react"
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -8,12 +7,14 @@ import { Input } from "@/components/ui/input"
 import { Avatar } from "@/components/ui/avatar"
 import { useAuth } from "@/contexts/auth-context"
 import { MessageSquare, Send, User } from "lucide-react"
-​
+
+
 interface Message {
   role: "user" | "assistant"
   content: string
 }
-​
+
+
 export default function ChatbotPage() {
   const { user } = useAuth()
   const [messages, setMessages] = useState<Message[]>([
@@ -25,19 +26,23 @@ export default function ChatbotPage() {
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-​
+
+
   // Hardcoded API key (REMOVE THIS FOR PRODUCTION)
   const apiKey = "AIzaSyDiaCC3dAZS8ZiDU1uF8YfEu9PoWy8YLoA" // Replace with your actual API key
-​
+
+
   // Auto-scroll to the bottom when messages change
   useEffect(() => {
     scrollToBottom()
   }, [messages])
-​
+
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
-​
+
+
   // Prepare conversation history for context
   const prepareConversationHistory = () => {
     // Get last 5 messages for context (or fewer if there aren't 5)
@@ -46,29 +51,33 @@ export default function ChatbotPage() {
       parts: [{ text: msg.content }]
     }));
   };
-​
+
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim()) return
-​
+
+
     const userMessage: Message = {
       role: "user",
       content: input,
     }
-​
+
+
     setMessages((prev) => [...prev, userMessage])
     setInput("")
     setIsLoading(true)
-​
+
+
     try {
       // Get conversation history for context
       const history = prepareConversationHistory();
-      
+     
       // Gemini doesn't support system roles, so we'll use a user message for instructions
       const instructionMessage = {
         role: "user",
-        parts: [{ 
-          text: `Instructions for the assistant: You are EduPlay Assistant, an educational AI designed to help students learn. 
+        parts: [{
+          text: `Instructions for the assistant: You are EduPlay Assistant, an educational AI designed to help students learn.
           When answering questions:
           1. Use clear, age-appropriate language
           2. Break down complex concepts into simpler parts
@@ -79,11 +88,11 @@ export default function ChatbotPage() {
           7. If appropriate, suggest related topics to explore further
           8. Keep answers concise but informative
           Always respond as if explaining to a student who is eager to learn.
-          
+         
           Now, please respond to this question: ${input}`
         }]
       };
-      
+     
       // Request body with educational prompt guidance
       const requestBody = {
         contents: [instructionMessage],
@@ -94,7 +103,8 @@ export default function ChatbotPage() {
           maxOutputTokens: 1024,
         }
       }
-​
+
+
       // Make API request
       const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + apiKey, {
         method: "POST",
@@ -103,33 +113,37 @@ export default function ChatbotPage() {
         },
         body: JSON.stringify(requestBody),
       })
-​
+
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => null)
         const errorText = errorData ? JSON.stringify(errorData) : await response.text()
         throw new Error(`Failed to get response: ${response.status} ${response.statusText}. ${errorText}`)
       }
-​
+
+
       const data = await response.json()
       console.log("API Response:", data) // Log the response for debugging
-      
+     
       // Extract the assistant's response from the API response with updated path
       let assistantResponse = "Sorry, I couldn't generate a response."
-      
-      if (data.candidates && 
-          data.candidates[0] && 
-          data.candidates[0].content && 
-          data.candidates[0].content.parts && 
+     
+      if (data.candidates &&
+          data.candidates[0] &&
+          data.candidates[0].content &&
+          data.candidates[0].content.parts &&
           data.candidates[0].content.parts[0] &&
           data.candidates[0].content.parts[0].text) {
         assistantResponse = data.candidates[0].content.parts[0].text
       }
-​
+
+
       const assistantMessage: Message = {
         role: "assistant",
         content: assistantResponse,
       }
-​
+
+
       setMessages((prev) => [...prev, assistantMessage])
     } catch (error: any) {
       console.error("Error:", error)
@@ -144,7 +158,8 @@ export default function ChatbotPage() {
       setIsLoading(false)
     }
   }
-​
+
+
   return (
     <div className="container mx-auto py-8 px-4">
       <Card className="w-full max-w-4xl mx-auto">
