@@ -13,6 +13,9 @@ import {
   Brain,
   Film,
 } from "lucide-react"
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "AIzaSyDiaCC3dAZS8ZiDU1uF8YfEu9PoWy8YLoA"
+const genAI = new GoogleGenerativeAI(GEMINI_API_KEY)
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
 
 // This would typically come from a database or API
 const subjectsData = {
