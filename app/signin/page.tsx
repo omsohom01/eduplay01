@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+
 import { useState } from "react"
 import Link from "next/link"
 import { useAuth } from "@/contexts/auth-context"
@@ -17,23 +18,35 @@ export default function SignInPage() {
   const [password, setPassword] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { login, error, setError } = useAuth()
+  const [age, setAge] = useState("")
+  const [showAgeVerification, setShowAgeVerification] = useState(false)
+  const [isAgeVerified, setIsAgeVerified] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!email || !password) {
-      setError("Please fill in all fields.")
+    if (!email || !password) return
+
+    if (!age) {
+      setError("Please enter your age")
       return
     }
 
-    setIsSubmitting(true)
+    // Show age verification before proceeding with login
+    setShowAgeVerification(true)
+  }
 
-    try {
-      await login(email, password)
-    } catch (err) {
-      setError("Failed to sign in. Please check your credentials.")
-    } finally {
-      setIsSubmitting(false)
+  const handleVerificationComplete = async (success: boolean) => {
+    setIsAgeVerified(success)
+
+    if (success) {
+      setIsSubmitting(true)
+
+      try {
+        await login(email, password, Number.parseInt(age))
+      } finally {
+        setIsSubmitting(false)
+      }
     }
   }
 
@@ -81,6 +94,19 @@ export default function SignInPage() {
                 required
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="age">Age</Label>
+              <Input
+                id="age"
+                type="number"
+                min="1"
+                max="120"
+                placeholder="Your age"
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
+                required
+              />
+            </div>
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
@@ -102,6 +128,20 @@ export default function SignInPage() {
           </p>
         </CardFooter>
       </Card>
+      {showAgeVerification && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="max-w-md w-full">
+            <FaceAgeVerification
+              claimedAge={Number.parseInt(age)}
+              onVerificationComplete={handleVerificationComplete}
+            />
+            <Button variant="outline" className="mt-4 w-full" onClick={() => setShowAgeVerification(false)}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
+

@@ -1,0 +1,429 @@
+[
+    {
+      "weights": [
+        {
+          "name": "entry_flow/conv_in/filters",
+          "shape": [3, 3, 3, 32],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.005431825039433908,
+            "min": -0.7441799304024353
+          }
+        },
+        {
+          "name": "entry_flow/conv_in/bias",
+          "shape": [32],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.0048278677174963,
+            "min": -0.7338359731394376
+          }
+        },
+        {
+          "name": "entry_flow/reduction_block_0/separable_conv0/depthwise_filter",
+          "shape": [3, 3, 32, 1],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.005691980614381678,
+            "min": -0.6261178675819845
+          }
+        },
+        {
+          "name": "entry_flow/reduction_block_0/separable_conv0/pointwise_filter",
+          "shape": [1, 1, 32, 64],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.010653339647779278,
+            "min": -1.3849341542113061
+          }
+        },
+        {
+          "name": "entry_flow/reduction_block_0/separable_conv0/bias",
+          "shape": [64],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.0030654917618992558,
+            "min": -0.4598237642848884
+          }
+        },
+        {
+          "name": "entry_flow/reduction_block_0/separable_conv1/depthwise_filter",
+          "shape": [3, 3, 64, 1],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.00683894624897078,
+            "min": -0.8138346036275228
+          }
+        },
+        {
+          "name": "entry_flow/reduction_block_0/separable_conv1/pointwise_filter",
+          "shape": [1, 1, 64, 64],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.011478300188101974,
+            "min": -1.4922790244532566
+          }
+        },
+        {
+          "name": "entry_flow/reduction_block_0/separable_conv1/bias",
+          "shape": [64],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.0030932608059232836,
+            "min": -0.44854281685887613
+          }
+        },
+        {
+          "name": "entry_flow/reduction_block_0/projection/filters",
+          "shape": [1, 1, 32, 64],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.008547955559948972,
+            "min": -0.9402751115943869
+          }
+        },
+        {
+          "name": "entry_flow/reduction_block_0/projection/bias",
+          "shape": [64],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.0015159862590771096,
+            "min": -0.18191835108925315
+          }
+        },
+        {
+          "name": "entry_flow/reduction_block_1/separable_conv0/depthwise_filter",
+          "shape": [3, 3, 64, 1],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.0051483920547161365,
+            "min": -0.6178070465659364
+          }
+        },
+        {
+          "name": "entry_flow/reduction_block_1/separable_conv0/pointwise_filter",
+          "shape": [1, 1, 64, 128],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.010757233127556786,
+            "min": -1.3983403065823822
+          }
+        },
+        {
+          "name": "entry_flow/reduction_block_1/separable_conv0/bias",
+          "shape": [128],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.0028784515435536357,
+            "min": -0.4605522469685817
+          }
+        },
+        {
+          "name": "entry_flow/reduction_block_1/separable_conv1/depthwise_filter",
+          "shape": [3, 3, 128, 1],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.00542719363751431,
+            "min": -0.7598071092519034
+          }
+        },
+        {
+          "name": "entry_flow/reduction_block_1/separable_conv1/pointwise_filter",
+          "shape": [1, 1, 128, 128],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.01183318524953307,
+            "min": -1.5383140824393
+          }
+        },
+        {
+          "name": "entry_flow/reduction_block_1/separable_conv1/bias",
+          "shape": [128],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.0028557713376782953,
+            "min": -0.45692341402852724
+          }
+        },
+        {
+          "name": "entry_flow/reduction_block_1/projection/filters",
+          "shape": [1, 1, 64, 128],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.00991809951305389,
+            "min": -1.2893529366970057
+          }
+        },
+        {
+          "name": "entry_flow/reduction_block_1/projection/bias",
+          "shape": [128],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.0018082334307222506,
+            "min": -0.2350703459938926
+          }
+        },
+        {
+          "name": "middle_flow/main_block_0/separable_conv0/depthwise_filter",
+          "shape": [3, 3, 128, 1],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.004911523706772748,
+            "min": -0.6385980818804572
+          }
+        },
+        {
+          "name": "middle_flow/main_block_0/separable_conv0/pointwise_filter",
+          "shape": [1, 1, 128, 128],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.010871310489273071,
+            "min": -1.4132703636054992
+          }
+        },
+        {
+          "name": "middle_flow/main_block_0/separable_conv0/bias",
+          "shape": [128],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.0024073322091823963,
+            "min": -0.3128531871937115
+          }
+        },
+        {
+          "name": "middle_flow/main_block_0/separable_conv1/depthwise_filter",
+          "shape": [3, 3, 128, 1],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.005407439067054221,
+            "min": -0.7029670787170487
+          }
+        },
+        {
+          "name": "middle_flow/main_block_0/separable_conv1/pointwise_filter",
+          "shape": [1, 1, 128, 128],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.01183318524953307,
+            "min": -1.5383140824393
+          }
+        },
+        {
+          "name": "middle_flow/main_block_0/separable_conv1/bias",
+          "shape": [128],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.0025123322380608254,
+            "min": -0.3016798685673
+          }
+        },
+        {
+          "name": "middle_flow/main_block_0/separable_conv2/depthwise_filter",
+          "shape": [3, 3, 128, 1],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.0037735333610086853,
+            "min": -0.5283946705412159
+          }
+        },
+        {
+          "name": "middle_flow/main_block_0/separable_conv2/pointwise_filter",
+          "shape": [1, 1, 128, 128],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.010351084483570329,
+            "min": -1.3456409828641428
+          }
+        },
+        {
+          "name": "middle_flow/main_block_0/separable_conv2/bias",
+          "shape": [128],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.0016575457038143903,
+            "min": -0.2072932129767988
+          }
+        },
+        {
+          "name": "exit_flow/reduction_block/separable_conv0/depthwise_filter",
+          "shape": [3, 3, 128, 1],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.005883726289404547,
+            "min": -0.7649844176225911
+          }
+        },
+        {
+          "name": "exit_flow/reduction_block/separable_conv0/pointwise_filter",
+          "shape": [1, 1, 128, 256],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.011697767660655506,
+            "min": -1.5207097958852158
+          }
+        },
+        {
+          "name": "exit_flow/reduction_block/separable_conv0/bias",
+          "shape": [256],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.0030316988137065066,
+            "min": -0.42443783391891093
+          }
+        },
+        {
+          "name": "exit_flow/reduction_block/separable_conv1/depthwise_filter",
+          "shape": [3, 3, 256, 1],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.007741751390344957,
+            "min": -1.0064276807448444
+          }
+        },
+        {
+          "name": "exit_flow/reduction_block/separable_conv1/pointwise_filter",
+          "shape": [1, 1, 256, 256],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.01153397517903645,
+            "min": -1.4994167732747386
+          }
+        },
+        {
+          "name": "exit_flow/reduction_block/separable_conv1/bias",
+          "shape": [256],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.0028884598666055816,
+            "min": -0.3899421320917535
+          }
+        },
+        {
+          "name": "exit_flow/reduction_block/projection/filters",
+          "shape": [1, 1, 128, 256],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.00879186188752175,
+            "min": -1.1429420453778275
+          }
+        },
+        {
+          "name": "exit_flow/reduction_block/projection/bias",
+          "shape": [256],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.0013251127180336151,
+            "min": -0.17226465334437
+          }
+        },
+        {
+          "name": "exit_flow/separable_conv/depthwise_filter",
+          "shape": [3, 3, 256, 1],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.0033703336371986686,
+            "min": -0.3875883682778469
+          }
+        },
+        {
+          "name": "exit_flow/separable_conv/pointwise_filter",
+          "shape": [1, 1, 256, 512],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.010076364348916447,
+            "min": -1.2998309809701216
+          }
+        },
+        {
+          "name": "exit_flow/separable_conv/bias",
+          "shape": [512],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.0020280554598651144,
+            "min": -0.2635472097824649
+          }
+        },
+        {
+          "name": "fc/age/weights",
+          "shape": [512, 1],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.008674054987290326,
+            "min": -1.0842568734112907
+          }
+        },
+        {
+          "name": "fc/age/bias",
+          "shape": [1],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.0036526367456464474,
+            "min": -0.6939009816728251
+          }
+        },
+        {
+          "name": "fc/gender/weights",
+          "shape": [512, 2],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.012195578459091981,
+            "min": -1.5244473073864977
+          }
+        },
+        {
+          "name": "fc/gender/bias",
+          "shape": [2],
+          "dtype": "float32",
+          "quantization": {
+            "dtype": "uint8",
+            "scale": 0.005155099537833121,
+            "min": -0.6701629399183057
+          }
+        }
+      ],
+      "paths": ["age_gender_model-shard1"]
+    }
+  ]
+  
+  
